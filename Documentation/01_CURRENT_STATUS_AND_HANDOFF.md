@@ -1,7 +1,7 @@
 # 01 — Current Status and Handoff
 
 **Status date:** 2026-09-21
-**Applies to commit:** TODO: fill in after this commit is pushed
+**Applies to commit:** `7b2940f`
 
 Provenance tags used in this file: **[V]** verified (code, photo, or measured output), **[R]** reported by a team member, not independently verified, **[TODO]** unknown.
 
