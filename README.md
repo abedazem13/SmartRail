@@ -1,4 +1,8 @@
 ## XXXXX Project by :  
+
+## Documentation handoff
+
+Current project members should give [DOCUMENTATION_AGENT_TASK.md](DOCUMENTATION_AGENT_TASK.md) to their AI agent and complete the documentation handoff described there.
   
 ## Details about the project
  
