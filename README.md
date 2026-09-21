@@ -1,6 +1,8 @@
 ## SmartRail — Seat Occupancy Sensing and Platform Guidance
 
-**Project by:** TODO: team member names
+**Project by:** Yazan Rabea, Abed Azem, Samar Khatib
+
+**Mentor:** Itai Dabran
 
 SmartRail detects in real time which train seats are free, sends that information to digital signage on the station platform, and guides waiting passengers to spread evenly along the platform (a uniform/linear distribution) instead of crowding around one point (a Gaussian distribution). A simulation quantifies how much this shortens the train's dwell time at the station.
 

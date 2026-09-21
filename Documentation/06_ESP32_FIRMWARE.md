@@ -5,7 +5,7 @@
 | Item | Value |
 |---|---|
 | Board | ESP32 DevKit V1 → Arduino board "ESP32 Dev Module" |
-| IDE | Arduino IDE 2.3.10 [R] |
+| IDE | Arduino IDE 2.3.10 [R]. All three members use Arduino IDE [R, 2026-09-21] |
 | ESP32 Arduino core | [TODO] record installed version. Firmware supports both 2.x and 3.x |
 | External libraries | None |
 | USB driver | Silicon Labs CP210x VCP |

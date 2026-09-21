@@ -6,7 +6,7 @@
 
 | Component | Component pin | ESP32 DevKit V1 pin | Direction | Voltage | Notes |
 |---|---|---|---|---|---|
-| Sensor seat 0 (HW-02) | Red (Vcc) | VIN | Power | ~5 V | Via the breadboard + rail |
+| Sensor seat 0 (HW-02) | Red (Vcc) | VIN | Power | ~5 V | Via the breadboard + rail. Confirmed on VIN [R, 2026-09-21] |
 | Sensor seat 0 | Black (GND) | GND | Power | 0 V | Common ground |
 | Sensor seat 0 | Yellow (Vo) | **GPIO34** | Analog in | 0–3.1 V | ADC1_CH6, input-only pin |
 | Sensor seat 1 | Red / Black | VIN / GND | Power | ~5 V | Shares rails with seat 0 |
