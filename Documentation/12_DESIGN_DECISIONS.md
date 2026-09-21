@@ -54,3 +54,22 @@ Date: 2026-09-21 · Status: accepted
 - **Context:** the course template keeps `parameters.h` and `SECRETS.h` directly in `ESP32/`, and Arduino IDE requires the `.ino` name to match its folder.
 - **Choice:** name the sketch `ESP32.ino` so every template path stays valid and the IDE opens it directly.
 - **Alternative:** PlatformIO (pioarduino) in VS Code. Not adopted yet — the course asks all members to use the same IDE. [TODO] team decision.
+
+## DR-007
+
+**Occupancy decided on the ESP32, not on the PC**
+Date: 2026-09-21 · Status: accepted [R]
+
+- **Context:** two firmware versions existed: this repository's (decides EMPTY/OCCUPIED on the board) and a draft that streamed averaged voltages and noise to a PC program, which applied fixed voltage thresholds.
+- **Options:** (a) decide on the ESP32, (b) stream raw readings and decide on the PC.
+- **Choice:** (a). It is the documented design (DR-003, DR-004); the relative threshold tolerates per-unit and mounting differences better than fixed voltages; and later stages send states over WiFi/ESP-NOW, which needs the decision on the board.
+- **Consequences:** tuning thresholds needs a recompile (NFR-002 not met yet). The draft's per-reading noise figure is replaced by the firmware's `noise` field in status lines.
+
+## DR-008
+
+**Interim PC software for free-seat counts and guidance**
+Date: 2026-09-21 · Status: accepted as interim [R]
+
+- **Context:** FR-004 (free seats per car) and FR-006 (guidance) need somewhere to run before the car → platform link (Q-07) and signage (Q-08) are chosen.
+- **Choice:** Python on a PC, reading IF-01 over USB (see 08). Adds an UNKNOWN state for calibration and lost data. A simulated board allows testing without hardware.
+- **Consequences:** not the final architecture; the counting and guidance logic can move to the platform side once IF-03 exists. Seat → carriage mapping is a setting (`CARRIAGES`), [TODO] confirm for the demo model (Q-15).

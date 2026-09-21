@@ -6,7 +6,7 @@
 |---|---|
 | Board | ESP32 DevKit V1 → Arduino board "ESP32 Dev Module" |
 | IDE | Arduino IDE 2.3.10 [R]. All three members use Arduino IDE [R, 2026-09-21] |
-| ESP32 Arduino core | [TODO] record installed version. Firmware supports both 2.x and 3.x |
+| ESP32 Arduino core | [TODO] record installed version. The firmware uses `ADC_11db`; `ADC_ATTEN_DB_12` did not compile on a member's install [V: compiler output, 2026-09-21] |
 | External libraries | None |
 | USB driver | Silicon Labs CP210x VCP |
 
@@ -47,7 +47,7 @@ The decision is **relative to the calibrated baseline**, not an absolute distanc
 
 | Name | Default | Unit | Effect / guidance |
 |---|---|---|---|
-| `NUM_SEATS` | 1 | — | Seats handled. Compile fails if the pin arrays are shorter |
+| `NUM_SEATS` | 2 | — | Seats handled. Compile fails if the pin arrays are shorter |
 | `SENSOR_PINS` | {34, 35} | GPIO | ADC1 pins only |
 | `LED_PINS` | {2, 4} | GPIO | GPIO2 = on-board LED |
 | `SAMPLE_INTERVAL_MS` | 40 | ms | Keep ≈ sensor update period |
@@ -81,6 +81,8 @@ EVENT seat=0 state=OCCUPIED dist=27.3cm
 
 A `?` after the state means a change is pending confirmation. The values above are illustrative only.
 
+These lines are parsed by `PC_software/seat_live.py`. The exact formats are specified in [08_COMMUNICATION_AND_DATA.md](08_COMMUNICATION_AND_DATA.md): **changing any `Serial.printf` format requires updating the PC software.**
+
 ## Build and flash
 
 1. Arduino IDE → File → Preferences → Additional boards manager URLs: `https://espressif.github.io/arduino-esp32/package_esp32_index.json` (if the esp32 package is not already listed).
@@ -89,6 +91,20 @@ A `?` after the state means a change is pending confirmation. The values above a
 4. Serial Monitor at **115200**.
 
 Command-line alternative: `arduino-cli compile --fqbn esp32:esp32:esp32 ESP32` then `arduino-cli upload -p <PORT> --fqbn esp32:esp32:esp32 ESP32`.
+
+## Compiled binary
+
+`ESP32/compiled_program.bin` must be exported from the same source that was tested:
+
+1. Arduino IDE → open `ESP32/ESP32.ino` → Sketch → Export Compiled Binary.
+2. In the new `ESP32/build/` folder, take `ESP32.ino.merged.bin` if present (flash at address `0x0`), otherwise `ESP32.ino.bin` (flash at `0x10000`).
+3. Copy it to `ESP32/compiled_program.bin`. The `build/` folder is git-ignored.
+4. [TODO] record here which file was used and the core version.
+
+Flash without Arduino IDE (`pip install esptool`):
+`esptool.py --chip esp32 --port <PORT> write_flash 0x0 compiled_program.bin` (`0x10000` for the non-merged file).
+
+Re-export after every change to `ESP32.ino` or `parameters.h`.
 
 ## Known limitations
 

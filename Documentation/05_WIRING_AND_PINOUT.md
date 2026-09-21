@@ -10,10 +10,10 @@
 | Sensor seat 0 | Black (GND) | GND | Power | 0 V | Common ground |
 | Sensor seat 0 | Yellow (Vo) | **GPIO34** | Analog in | 0–3.1 V | ADC1_CH6, input-only pin |
 | Sensor seat 1 | Red / Black | VIN / GND | Power | ~5 V | Shares rails with seat 0 |
-| Sensor seat 1 | Yellow (Vo) | **GPIO35** | Analog in | 0–3.1 V | ADC1_CH7, input-only pin |
-| Capacitor 10 µF (HW-03) | + / − | VIN rail / GND rail | — | — | One per sensor, **next to the sensor**. Stripe on the case marks −. |
+| Sensor seat 1 | Yellow (Vo) | **GPIO35** | Analog in | 0–3.1 V | ADC1_CH7, input-only pin. Wired [R, 2026-09-21] |
+| Capacitor 10 µF (HW-03) | + / − | VIN rail / GND rail | — | — | One per sensor, **next to the sensor**. Stripe on the case marks −. Currently not fitted [R, 2026-09-21] |
 | Status LED seat 0 | — | GPIO2 | Digital out | 3.3 V | On-board LED, no wiring needed |
-| Status LED seat 1 (HW-07) | Anode via 220–330 Ω | GPIO4 | Digital out | 3.3 V | Cathode to GND |
+| Status LED seat 1 (HW-07) | Anode via 220–330 Ω | GPIO4 | Digital out | 3.3 V | Cathode to GND. Not fitted; the firmware drives GPIO4 anyway (harmless) |
 
 Cross-check: these values match `SENSOR_PINS` and `LED_PINS` in `ESP32/parameters.h`.
 

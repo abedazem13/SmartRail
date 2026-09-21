@@ -7,8 +7,8 @@ Provenance: **[V]** verified (photo/datasheet), **[R]** reported by a member, **
 | ID | Part | Qty | Purpose | Key specs | Interface | Status |
 |---|---|---|---|---|---|---|
 | HW-01 | ESP32 DevKit V1, 30-pin, CP2102 USB-UART [V] | 1 | Seat controller | 3.3 V logic, ADC1 on GPIO32–39 | USB (CP210x VCP driver) | In use |
-| HW-02 | Sharp GP2Y0A21YK0F IR distance sensor [R] | 1 (a second one is not in hand) | Seat occupancy | Supply 4.5–5.5 V, ~30 mA avg, range 10–80 cm, update ~38 ms | Analog voltage out, max ~3.1 V | 1 in use |
-| HW-03 | Electrolytic capacitor 10 µF (≥ 10 V) | 1 per sensor | Supply bypass for pulsed sensor current | Place right next to the sensor | — | **Missing** |
+| HW-02 | Sharp GP2Y0A21YK0F IR distance sensor [R] | 2 | Seat occupancy | Supply 4.5–5.5 V, ~30 mA avg, range 10–80 cm, update ~38 ms | Analog voltage out, max ~3.1 V | 2 in use [R, 2026-09-21] |
+| HW-03 | Electrolytic capacitor 10 µF (≥ 10 V) | 1 per sensor | Supply bypass for pulsed sensor current | Place right next to the sensor | — | **Not fitted — member's choice** [R, 2026-09-21]. Fit if `noise` > ~150 mV |
 | HW-04 | Ceramic capacitor 100 nF (optional) | 1 per sensor | High-frequency bypass, parallel to HW-03 | — | — | Optional |
 | HW-05 | Breadboard + jumper wires | — | Prototype wiring | — | — | In use |
 | HW-06 | USB cable with data lines | 1 | Power + programming | Charge-only cables will not show a COM port | USB | In use |

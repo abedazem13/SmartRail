@@ -46,11 +46,9 @@ bool     debugRaw   = false;
 // ================= Sensor layer =================
 
 void setupAdc(uint8_t pin) {
-#if defined(ESP_ARDUINO_VERSION_MAJOR) && ESP_ARDUINO_VERSION_MAJOR >= 3
-  analogSetPinAttenuation(pin, ADC_ATTEN_DB_12);  // full range up to ~3.1 V
-#else
+  // Full range up to ~3.1 V. ADC_11db is the Arduino-core name; the IDF name
+  // ADC_ATTEN_DB_12 is not declared on the team's installed core (compile error).
   analogSetPinAttenuation(pin, ADC_11db);
-#endif
 }
 
 void pushSample(Seat &s, uint8_t pin) {

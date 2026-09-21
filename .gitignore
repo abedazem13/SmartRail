@@ -10,3 +10,11 @@ build/
 .vscode/
 .DS_Store
 Thumbs.db
+
+# Python
+__pycache__/
+*.pyc
+
+# PC software session logs (rename to keep one as test evidence)
+PC_software/seat_log.txt
+seat_log.txt

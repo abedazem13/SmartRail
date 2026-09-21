@@ -7,7 +7,7 @@
 #include <stdint.h>
 
 // ---------------- Seats and pins ----------------
-#define NUM_SEATS 1  // set to 2 after the second sensor is wired
+#define NUM_SEATS 2  // both sensors wired (GPIO34 = seat 0, GPIO35 = seat 1)
 
 // Sensor analog outputs. ADC1 pins only (GPIO32-39): ADC2 stops working
 // when WiFi is enabled. GPIO34/35 are input-only, which is fine for analog.
