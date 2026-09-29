@@ -21,10 +21,10 @@ Place white cardboard at measured distances and record the printed `cm`.
 
 | Seat | True distance [cm] | Printed cm | Volt | Noise [mV] | Date | Operator |
 |---|---|---|---|---|---|---|
-| 0 | 15 | TODO | | | | |
-| 0 | 30 | TODO | | | | |
-| 0 | 60 | TODO | | | | |
-| 0 | 80 | TODO | | | | |
+| 0 | 15 | 15.1 | | 93| | |
+| 0 | 30 | TODO | |135 | | |
+| 0 | 60 | TODO | |225 | | |
+| 0 | 80 | TODO | |231 | | |
 | 1 | 15 | TODO | | | | |
 | 1 | 30 | TODO | | | | |
 | 1 | 60 | TODO | | | | |
