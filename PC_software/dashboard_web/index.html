@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101923">
+  <title>SmartRail · Platform display</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="/assets/style.css">
+  <script src="/assets/app.js" defer></script>
+</head>
+<body>
+  <svg class="svg-definitions" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+    <symbol id="seat-icon" viewBox="0 0 40 44">
+      <rect x="10" y="3" width="20" height="23" rx="6"/>
+      <path d="M7 20v9c0 4 3 6 7 6h12c4 0 7-2 7-6v-9M13 35v6m14-6v6"/>
+      <path d="M11 28h18"/>
+    </symbol>
+  </svg>
+  <div class="shell">
+    <header class="topbar">
+      <a class="brand" href="/" aria-label="SmartRail passenger display">
+        <span class="brand-mark" aria-hidden="true">SR</span>
+        <span>Smart<span class="brand-light">Rail</span><small>PLATFORM GUIDANCE</small></span>
+      </a>
+      <nav aria-label="Views">
+        <a href="/" id="passenger-link">Passenger display</a>
+        <a href="/controls" id="controls-link">Demo controls</a>
+      </nav>
+      <button id="fullscreen" class="quiet-button" type="button">⛶ Full screen</button>
+    </header>
+
+    <div class="status-strip">
+      <span class="demo-label">PROTOTYPE · NOT A LIVE TRAIN SERVICE</span>
+      <span class="connection"><span id="connection-dot" class="dot unknown"></span><span id="connection-text">Connecting to dashboard…</span></span>
+    </div>
+    <div id="offline" class="alert" role="alert" hidden>Dashboard connection lost. Availability is unavailable until the server reconnects.</div>
+    <div id="error" class="alert" role="alert" hidden></div>
+    <div id="hardware-warning" class="alert" role="alert" hidden></div>
+
+    <main>
+      <section class="hero" aria-labelledby="title">
+        <div>
+          <div class="eyebrow" id="eyebrow">BEFORE YOU BOARD</div>
+          <h1 id="title">Find your space.</h1>
+          <p id="subtitle">Check the cars below. Wait by the matching platform zone.</p>
+        </div>
+        <div class="total-card">
+          <span class="total-number" id="total-free">—</span>
+          <div><strong>confirmed free seats</strong><span id="total-detail">Across 3 cars · 9 seats</span></div>
+        </div>
+      </section>
+
+      <section class="guidance" aria-label="Availability suggestion" aria-live="polite">
+        <span class="guidance-icon" aria-hidden="true">↗</span>
+        <div><span class="eyebrow">AT A GLANCE</span><h2 id="guidance-text">Waiting for availability…</h2></div>
+        <span class="guidance-note">Availability only<br>No seat reservations</span>
+      </section>
+
+      <section class="train-section" aria-label="Seat availability by train car">
+        <div class="section-heading"><h2>Your train</h2><span>3 logical cars · 3 seats each</span></div>
+        <div class="car-grid" id="cars"></div>
+        <div class="platform-track" aria-label="Platform zone map">
+          <div><span>ZONE</span><strong>A</strong><small>Board Car A here</small></div>
+          <div><span>ZONE</span><strong>B</strong><small>Board Car B here</small></div>
+          <div><span>ZONE</span><strong>C</strong><small>Board Car C here</small></div>
+        </div>
+        <div class="legend">
+          <span><i class="dot available"></i>2–3 free</span>
+          <span><i class="dot limited"></i>1 free</span>
+          <span><i class="dot none"></i>No free seats</span>
+          <span><i class="dot unknown"></i>Incomplete data</span>
+        </div>
+      </section>
+
+      <section id="controls" class="controls-panel" aria-labelledby="controls-title" hidden>
+        <div class="section-heading"><h2 id="controls-title">Demo desk</h2><span>Changes appear in every open display</span></div>
+        <div class="control-columns">
+          <div>
+            <h3>1. Choose your input</h3>
+            <p>Simulation: all seats are editable. Hybrid: A1 and B1 come only from the ESP32.</p>
+            <div class="button-row">
+              <button type="button" id="simulation" class="secondary-button">Use simulation</button>
+              <span class="mode-badge" id="mode-label">Loading…</span>
+            </div>
+            <label for="serial-port">ESP32 USB serial port</label>
+            <div class="port-row">
+              <input id="serial-port" list="serial-ports" placeholder="e.g. COM5" autocomplete="off" maxlength="200">
+              <datalist id="serial-ports"></datalist>
+              <button type="button" id="refresh-ports" class="quiet-button">Refresh ports</button>
+            </div>
+            <p class="helper" id="port-help">Select a detected port or enter it manually.</p>
+            <button type="button" id="hybrid" class="primary-button">Connect hardware · hybrid mode</button>
+            <p class="helper">Close Arduino Serial Monitor first. Keep both physical seats empty for about 5 seconds after connecting or resetting.</p>
+          </div>
+          <div>
+            <h3>2. Set the scene</h3>
+            <p>Click a simulated seat above to change it. Real sensor seats are locked in hybrid mode.</p>
+            <div class="scenario-buttons">
+              <button type="button" data-preset="example" class="secondary-button">Example · A: 1 / B: 3 / C: 0</button>
+              <button type="button" data-preset="empty" class="secondary-button">Empty simulated seats</button>
+              <button type="button" data-preset="occupied" class="secondary-button">Occupy simulated seats</button>
+            </div>
+            <p class="helper">Scenarios never overwrite real readings. In hybrid mode, example totals depend on the two physical seats.</p>
+            <a class="open-display" href="/" target="_blank" rel="noopener">Open passenger display in a new tab ↗</a>
+          </div>
+        </div>
+        <details class="diagnostics">
+          <summary>Hardware diagnostics &amp; mapping</summary>
+          <p>Firmware seat 0 / GPIO34 → A1 · Firmware seat 1 / GPIO35 → B1. Sensor state becomes unknown after 2 seconds without a valid update.</p>
+          <p id="hardware-detail">No hardware is needed in simulation mode.</p>
+          <div class="diagnostic-grid" id="sensor-details"></div>
+          <span class="eyebrow">LAST BOARD MESSAGE (NOT A SAVED LOG)</span>
+          <pre id="last-message">—</pre>
+        </details>
+      </section>
+    </main>
+    <footer>
+      <span id="source-summary">Connecting…</span>
+      <span>Seat availability demo · No passenger-flow or dwell-time simulation</span>
+    </footer>
+  </div>
+</body>
+</html>

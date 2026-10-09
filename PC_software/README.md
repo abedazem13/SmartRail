@@ -1,5 +1,13 @@
 ## PC software (Python)
 
+### New: graphical three-car dashboard
+
+The [dashboard guide](../Documentation/17_HYBRID_DASHBOARD.md) describes the passenger screen and separate demo controls: three cars × three seats, simulation without hardware, or two real sensors plus seven simulated seats over USB. Run `dashboard.py` after installing `requirements.txt`; the guide includes complete setup commands. Open http://127.0.0.1:8765/ and http://127.0.0.1:8765/controls.
+
+**Hardware is not verified yet.** Teammates should give [the hardware testing handoff](../Documentation/HARDWARE_DASHBOARD_AGENT_HANDOFF.md) to their AI agent. Do not run a console serial reader and the hybrid dashboard on the same port simultaneously.
+
+### Existing console programs
+
 Runs on a laptop connected to the ESP32 by USB. It reads the firmware's serial
 output, keeps the state of every seat, counts free seats per carriage and shows
 which carriage the next passenger should board.

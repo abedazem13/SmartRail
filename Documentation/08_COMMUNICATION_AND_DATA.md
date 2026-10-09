@@ -9,10 +9,12 @@ Provenance: **[V]** verified from code, **[R]** reported by a member, **[TODO]**
 | IF-01 | ESP32 → PC | USB serial, 115200 baud, text lines | **Implemented** [V] |
 | IF-02 | PC → ESP32 | USB serial, single-character commands | **Implemented** [V] |
 | IF-03 | Car → platform | [TODO] not selected (candidates: ESP-NOW, WiFi + Firebase) — Q-07 | Planned |
+| IF-04 | Local dashboard server ↔ browser | HTTP JSON on 127.0.0.1; 500 ms polling | Implemented, software-tested; [API and lifecycle](17_HYBRID_DASHBOARD.md#local-api-if-04) |
 
 ## IF-01 — ESP32 → PC serial lines
 
 Produced by `ESP32/ESP32.ino`, parsed by `PC_software/seat_live.py` [V].
+The new dashboard reuses that `Board` parser with a dedicated serial worker; see [dashboard lifecycle](17_HYBRID_DASHBOARD.md#data-flow-and-failure-behavior). Dashboard-specific calibration gating waits for fresh post-calibration status and only two seats are mapped to real inputs.
 Seat numbers are 0-based: seat N is the Nth entry of `SENSOR_PINS` in `ESP32/parameters.h`.
 
 | Line | When | Example | Fields |

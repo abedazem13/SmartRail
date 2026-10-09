@@ -6,7 +6,11 @@
 
 SmartRail detects in real time which train seats are free, sends that information to digital signage on the station platform, and guides waiting passengers to spread evenly along the platform (a uniform/linear distribution) instead of crowding around one point (a Gaussian distribution). A simulation quantifies how much this shortens the train's dwell time at the station.
 
-**Current maturity (2026-09-21):** hardware feasibility stage. Two IR distance sensors on an ESP32 each distinguish an empty seat from an occupied one. A PC program collects the seat states over USB, counts free seats per carriage and shows passenger guidance. Car → platform communication, platform signage and the dwell-time simulation are not started. See [Documentation/01_CURRENT_STATUS_AND_HANDOFF.md](Documentation/01_CURRENT_STATUS_AND_HANDOFF.md).
+**Current maturity (2026-10-09):** the hardware presentation happened (reported by Abed; result not recorded). Firmware supports two IR seat sensors. A new laptop dashboard represents three cars × three seats: all simulated, or two real inputs plus seven simulated seats. Software tests pass; integration of this dashboard with the physical ESP32 is pending with teammates. Wireless car → platform communication and the dwell-time simulation are not started. See [Documentation/01_CURRENT_STATUS_AND_HANDOFF.md](Documentation/01_CURRENT_STATUS_AND_HANDOFF.md).
+
+## Run the passenger display
+
+Start with the [hybrid dashboard guide](Documentation/17_HYBRID_DASHBOARD.md). It works without hardware and includes a separate control screen for changing simulated seats. Give teammates' AI agent [the hardware test handoff](Documentation/HARDWARE_DASHBOARD_AGENT_HANDOFF.md) before testing the two physical sensors.
 
 ## Documentation handoff
 
@@ -19,9 +23,9 @@ Current project members should give [DOCUMENTATION_AGENT_TASK.md](DOCUMENTATION_
 | Sensing | Sharp GP2Y0A21YK0F IR distance sensor (analog, 10–80 cm), one per seat |
 | Controller | ESP32 DevKit V1 (30-pin, CP2102 USB-UART) |
 | Firmware | Arduino framework, Arduino IDE 2.x |
-| PC software (interim) | Python 3 + pyserial: seat states over USB, free seats per carriage, guidance |
+| PC software (interim) | Python 3.10+, Flask/Waitress + pyserial: local passenger dashboard, controls, USB seat states |
 | Communication | TODO: not selected yet (candidates: ESP-NOW, WiFi + Firebase) |
-| Platform signage | TODO: not selected yet |
+| Platform signage | Laptop browser demo implemented; final deployment/hardware approval pending |
 | Simulation | TODO: not started |
 
 ## Folder description :
@@ -37,6 +41,7 @@ Current project members should give [DOCUMENTATION_AGENT_TASK.md](DOCUMENTATION_
 
 | File | What it does |
 |---|---|
+| [PC_software/dashboard.py](PC_software/dashboard.py) | New local passenger screen and controls: simulation or two-sensor hybrid mode |
 | `ESP32/ESP32.ino` | Firmware: reads both seat sensors, calibrates the empty-seat distance at boot, decides EMPTY/OCCUPIED per seat, lights a status LED, prints status and events over USB |
 | `ESP32/parameters.h` | Every tunable setting: number of seats, pins, sampling, thresholds |
 | `ESP32/SECRETS.example.h` | Template for WiFi credentials (not used yet). Real values go in `ESP32/SECRETS.h`, which Git ignores |
@@ -60,6 +65,8 @@ Current project members should give [DOCUMENTATION_AGENT_TASK.md](DOCUMENTATION_
 * [Open questions](Documentation/OPEN_QUESTIONS.md)
 * [Changelog](Documentation/CHANGELOG.md)
 * [PC software](PC_software/README.md)
+* [17 Hybrid dashboard](Documentation/17_HYBRID_DASHBOARD.md)
+* [Hardware dashboard agent handoff](Documentation/HARDWARE_DASHBOARD_AGENT_HANDOFF.md)
 
 ## ESP32 SDK version used in this project:
 TODO: fill from Arduino IDE → Boards Manager → "esp32 by Espressif Systems" installed version

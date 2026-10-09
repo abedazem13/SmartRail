@@ -1,13 +1,13 @@
 # 01 — Current Status and Handoff
 
-**Status date:** 2026-09-21
-**Applies to commit:** the commit adding `PC_software/` (TODO: fill in hash after pushing). Previous: `7b2940f`
+**Status date:** 2026-10-09 (dashboard update; older hardware observations remain dated below)
+**Applies to:** working-tree dashboard implementation based on `0d7ee98`; not yet committed. Record the tested commit in the hardware test report.
 
 Provenance tags used in this file: **[V]** verified (code, photo, or measured output), **[R]** reported by a team member, not independently verified, **[TODO]** unknown.
 
 ## Next milestone
 
-Hardware feasibility demo: detect an empty seat and an occupied seat. **Due 2026-10-04** [R]. The earlier optional slots (3/9, 10/9, 15/9) have passed. Arrange the demo slot with the lab staff in advance.
+The hardware presentation **happened** [R: Abed, 2026-10-09]. Exact presentation date, result and evidence were not supplied; do not infer a pass or current dashboard validation. Next: validate the laptop passenger display with three logical cars × three seats, using two real sensors and seven simulated seats. Abed has no hardware; teammates must perform physical testing using [the agent handoff](HARDWARE_DASHBOARD_AGENT_HANDOFF.md).
 
 ## Status matrix
 
@@ -19,10 +19,11 @@ Hardware feasibility demo: detect an empty seat and an occupied seat. **Due 2026
 | Bypass capacitor (10 µF) | **Not fitted — member's choice** [R, 2026-09-21] | Recommended by the sensor datasheet. Detection still works thanks to the 40 cm gap. Check the `noise` values: fit it if they exceed ~150 mV |
 | Second sensor (GPIO35) | Wired [R, 2026-09-21] | `NUM_SEATS 2` set in `parameters.h`. Status LED for seat 1 (GPIO4) not fitted — firmware drives GPIO4 anyway, harmless with nothing connected |
 | PC software: free seats per car + guidance | Implemented [V] | `PC_software/`. Tested on a simulated board and on output captured from the firmware compile test, not yet with the physical board. Interim for FR-004/FR-006 (DR-008) |
+| Graphical hybrid passenger dashboard | Implemented; software-tested | Passenger and controls views, three cars × three seats, simulation or sensor 0→A1 / sensor 1→B1 plus seven simulated seats. [Guide](17_HYBRID_DASHBOARD.md), [software evidence](assets/test-results/hybrid-dashboard-software-2026-10-09.md). No physical hardware available to implementing agent |
 | Acceptance test (10 cycles) | Not run | Procedure in `Unit Tests/README.md` |
 | Calibration table | Not recorded | Template in `Unit Tests/README.md` |
 | Communication car → platform | Not started | |
-| Platform signage | Not started | |
+| Platform signage | Laptop browser prototype implemented | Final station-side hardware/deployment not selected; USB only, not wireless |
 | Queue / dispersion simulation | Not started | Highest project risk — see 02 |
 | Flutter app | Not started | [TODO] confirm whether it is in scope |
 
@@ -34,13 +35,11 @@ Hardware feasibility demo: detect an empty seat and an occupied seat. **Due 2026
 
 ## Immediate next actions (priority order)
 
-1. Compile and upload `ESP32/ESP32.ino` in Arduino IDE with the ADC fix; export `ESP32/compiled_program.bin`.
-2. Run `Unit Tests/ir_sensor_check` (both sensors), fill in the calibration table. If `noise` exceeds ~150 mV, fit the 10 µF capacitors.
-3. Run the main firmware, record the `CAL` lines and the absolute occupied distance of each seat.
-4. Run the 10-cycle acceptance test on both seats, record the results.
-5. Run `PC_software/seat_live.py` with the real board; keep the session log as evidence.
-6. Record the installed ESP32 core, Python and pyserial versions in `README.md`.
-7. Raise with the mentor how the simulation will be demonstrated and measured.
+1. Teammates: follow [HARDWARE_DASHBOARD_AGENT_HANDOFF.md](HARDWARE_DASHBOARD_AGENT_HANDOFF.md); run software checks first and record physical results separately.
+2. Confirm actual Arduino compile/upload, wiring, manufacturer-recommended capacitors, both sensors' distance/noise measurements, and ten-cycle results. Earlier hardware test entries above remain unrecorded in Git; the presentation alone does not supply them.
+3. Validate A1/B1 mapping, manual simulated seats, shared passenger/controls views, calibration, USB loss and recovery with the actual board. Preserve video/screenshots and test results.
+4. Record tool versions and the presentation result/evidence when supplied.
+5. Confirm laptop demo acceptance with the mentor, select the later wireless channel, and agree how the separate passenger-flow simulation will be demonstrated and measured.
 
 ## Reproduce the latest working state
 

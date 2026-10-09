@@ -73,3 +73,14 @@ Date: 2026-09-21 · Status: accepted as interim [R]
 - **Context:** FR-004 (free seats per car) and FR-006 (guidance) need somewhere to run before the car → platform link (Q-07) and signage (Q-08) are chosen.
 - **Choice:** Python on a PC, reading IF-01 over USB (see 08). Adds an UNKNOWN state for calibration and lost data. A simulated board allows testing without hardware.
 - **Consequences:** not the final architecture; the counting and guidance logic can move to the platform side once IF-03 exists. Seat → carriage mapping is a setting (`CARRIAGES`), [TODO] confirm for the demo model (Q-15).
+
+## DR-009
+
+**Local passenger dashboard with explicit hybrid sources**
+Date: 2026-10-09 · Status: implemented for demo, final course acceptance pending
+
+- **Context:** Abed needs three cars with three seats each on a laptop screen, but the team has only two real sensors. The current task excludes passenger-flow/dwell-time simulation.
+- **Choice:** Flask + Waitress on loopback, vanilla HTML/CSS/JS with no build step or external runtime assets. Passenger and operator views share server state. Reuse the existing `Board` parser, leaving console tools and firmware unchanged.
+- **Mapping:** firmware sensor 0→A1, sensor 1→B1, seven simulated seats; all nine simulated when hardware-free. This is a logical demo topology, not three real train-car nodes.
+- **Safety:** real seats cannot be edited by API or presets; missing/calibrating data is unknown, not free. Browser connection loss hides old counts. Recommendations do not allocate/reserve seats or invoke the older passenger-assignment demonstration.
+- **Consequences:** no separate monitor or Flutter needed for development. USB and a laptop remain interim. One local, memory-only session; no authentication or network/public deployment. Physical validation belongs to teammates using the [handoff](HARDWARE_DASHBOARD_AGENT_HANDOFF.md).
