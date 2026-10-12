@@ -47,7 +47,11 @@
         </div>
         <div class="total-card">
           <span class="total-number" id="total-free">—</span>
-          <div><strong>confirmed free seats</strong><span id="total-detail">Across 3 cars · 9 seats</span></div>
+          <div><strong>confirmed free seats</strong><span id="total-detail">Across 12 cars · 1296 seats</span></div>
+        </div>
+        <div class="total-card station-card">
+          <span class="total-number" id="station-number">—</span>
+          <div><strong>station</strong><span>Stops simulated so far</span></div>
         </div>
       </section>
 
@@ -58,18 +62,15 @@
       </section>
 
       <section class="train-section" aria-label="Seat availability by train car">
-        <div class="section-heading"><h2>Your train</h2><span>3 logical cars · 3 seats each</span></div>
+        <div class="section-heading"><h2>Your train</h2><span id="train-subtitle">12 cars · 108 seats each · 1296 total</span></div>
         <div class="car-grid" id="cars"></div>
-        <div class="platform-track" aria-label="Platform zone map">
-          <div><span>ZONE</span><strong>A</strong><small>Board Car A here</small></div>
-          <div><span>ZONE</span><strong>B</strong><small>Board Car B here</small></div>
-          <div><span>ZONE</span><strong>C</strong><small>Board Car C here</small></div>
-        </div>
+        <div class="platform-track" id="platform-track" aria-label="Platform zone map"></div>
         <div class="legend">
-          <span><i class="dot available"></i>2–3 free</span>
-          <span><i class="dot limited"></i>1 free</span>
-          <span><i class="dot none"></i>No free seats</span>
+          <span><i class="dot available"></i>Seats available (10+ free)</span>
+          <span><i class="dot limited"></i>About to be full (1–9 free)</span>
+          <span><i class="dot none"></i>Full · no free seats</span>
           <span><i class="dot unknown"></i>Incomplete data</span>
+          <span><i class="dot sensor-key"></i>Physical sensor seat (A1, B1)</span>
         </div>
       </section>
 
@@ -78,7 +79,7 @@
         <div class="control-columns">
           <div>
             <h3>1. Choose your input</h3>
-            <p>Simulation: all seats are editable. Hybrid: A1 and B1 come only from the ESP32.</p>
+            <p>Simulation: all 1296 seats are editable. Hybrid: A1 and B1 come only from the ESP32, the other 1294 stay simulated.</p>
             <div class="button-row">
               <button type="button" id="simulation" class="secondary-button">Use simulation</button>
               <span class="mode-badge" id="mode-label">Loading…</span>
@@ -95,9 +96,11 @@
           </div>
           <div>
             <h3>2. Set the scene</h3>
-            <p>Click a simulated seat above to change it. Real sensor seats are locked in hybrid mode.</p>
+            <p>Click any seat in the maps above to change it. Real sensor seats are locked in hybrid mode.</p>
+            <button type="button" id="next-stop" class="primary-button">Next stop ▸ passengers board and alight</button>
+            <p class="helper">Each stop frees 5–20% of occupied seats, then fills 5–20% of free ones, spread at random across all cars. Physical sensor seats are never changed.</p>
             <div class="scenario-buttons">
-              <button type="button" data-preset="example" class="secondary-button">Example · A: 1 / B: 3 / C: 0</button>
+              <button type="button" data-preset="example" class="secondary-button">Example scenario · station 1</button>
               <button type="button" data-preset="empty" class="secondary-button">Empty simulated seats</button>
               <button type="button" data-preset="occupied" class="secondary-button">Occupy simulated seats</button>
             </div>
@@ -117,7 +120,7 @@
     </main>
     <footer>
       <span id="source-summary">Connecting…</span>
-      <span>Seat availability demo · No passenger-flow or dwell-time simulation</span>
+      <span>Seat availability demo · Boarding is random, not a passenger-flow or dwell-time model</span>
     </footer>
   </div>
 </body>

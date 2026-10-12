@@ -34,7 +34,7 @@ nav a[aria-current="page"] { background: #253444; color: var(--ink); }
 .secondary-button { background: #213142; color: var(--ink); }
 .primary-button { background: var(--mint); color: #0f3025; border-color: transparent; }
 button:not(:disabled):hover { filter: brightness(1.13); }
-button:disabled:not(.seat) { opacity: .5; }
+button:disabled:not(.seat):not(.cell) { opacity: .5; }
 .status-strip { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 20px 0; font-size: 11px; }
 .demo-label { letter-spacing: 1.3px; color: var(--muted); }
 .connection { display: flex; align-items: center; gap: 8px; color: var(--muted); }
@@ -59,7 +59,7 @@ h1 { font-size: clamp(32px, 4.5vw, 58px); line-height: 1.12; font-weight: 650; l
 .section-heading { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 17px; }
 .section-heading h2 { font-size: 17px; margin: 0; font-weight: 600; }
 .section-heading > span { font-size: 12px; color: var(--muted); }
-.car-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 22px; }
+.car-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 18px; }
 .car { background: linear-gradient(150deg, #1b2a38, #14212d); border: 1px solid var(--line); border-top: 3px solid var(--signal); border-radius: 16px; padding: 24px; min-width: 0; box-shadow: 0 12px 30px #00000017; }
 .car-header { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
 .car-header h3 { margin: 0; font-size: 21px; letter-spacing: -.5px; }
@@ -78,7 +78,7 @@ h1 { font-size: clamp(32px, 4.5vw, 58px); line-height: 1.12; font-weight: 650; l
 .seat-state { font-size: 9px; margin-top: 3px; }
 .seat-source { font-size: 9px; color: var(--muted); margin-top: 5px; }
 .car-footnote { font-size: 11px; color: var(--muted); margin: 15px 0 0; min-height: 16px; }
-.platform-track { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 22px; margin-top: 24px; }
+.platform-track { display: grid; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); gap: 12px; margin-top: 24px; }
 .platform-track > div { text-align: center; border-top: 2px dashed #4d5956; padding: 15px 4px 4px; position: relative; }
 .platform-track > div::before { content: ""; position: absolute; height: 7px; width: 36px; background: var(--yellow); top: -5px; left: calc(50% - 18px); border-radius: 2px; }
 .platform-track span { font-size: 10px; color: var(--muted); letter-spacing: 2px; }
@@ -126,3 +126,33 @@ footer { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12
 }
 @media (max-width: 900px) { .shell { padding: 0 24px; } .topbar { flex-wrap: wrap; padding: 18px 0; gap: 14px; } nav { order: 3; margin: 0; width: 100%; } #fullscreen { margin-left: auto; } .hero { gap: 18px; } .total-card { padding-left: 18px; gap: 10px; } .total-number { font-size: 48px; } .car-grid, .platform-track { gap: 12px; } .car { padding: 17px 12px; } .seat-count strong { font-size: 54px; } .guidance-note { display: none; } }
 @media (max-width: 600px) { .shell { padding: 0 16px; } .hero { flex-direction: column; align-items: flex-start; padding: 20px 0 25px; } .total-card { padding: 0; border: 0; } .status-strip { flex-wrap: wrap; } .car-grid { grid-template-columns: 1fr; gap: 18px; } .car { padding: 22px; } .seat-count { margin-top: 12px; } .seat-row { margin-top: 14px; padding-top: 14px; } .seat { padding: 13px 6px; } .seat-source, .seat-state { font-size: 11px; } .control-columns, .diagnostic-grid { grid-template-columns: 1fr; gap: 15px; } .controls-panel { padding: 20px; } .section-heading { flex-wrap: wrap; } .guidance { padding: 18px; gap: 12px; } .legend { gap: 15px; } }
+/* ---- 12 cars x 108 seats ---- */
+.car.best { border-color: var(--mint); box-shadow: 0 0 0 1px var(--mint), 0 12px 30px #00000017; }
+.seat-count strong { font-size: 44px; letter-spacing: -2px; }
+.occupancy { display: flex; align-items: center; gap: 10px; margin-top: 12px; }
+.occupancy-bar { flex: 1; height: 6px; border-radius: 3px; background: #22313f; overflow: hidden; }
+.occupancy-bar > i { display: block; height: 100%; width: 0; background: var(--signal); transition: width .3s ease; }
+.occupancy > span { font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.station-card .total-number { color: var(--ink); }
+.dot.sensor-key { --signal: var(--yellow); }
+
+/* Seat map: one cell per seat, only on the controls view. */
+.seat-grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 2px; margin-top: 18px;
+  padding-top: 16px; border-top: 1px solid var(--line); }
+.cell { padding: 0; aspect-ratio: 1; border: 1px solid #2c3d4d; border-radius: 2px; background: #182733; }
+.cell[data-state="EMPTY"] { background: var(--mint); border-color: var(--mint); }
+.cell[data-state="OCCUPIED"] { background: #6d3442; border-color: #7d4250; }
+.cell[data-state="UNKNOWN"] { background: #243442; border-style: dashed; }
+.cell.sensor { outline: 2px solid var(--yellow); outline-offset: -1px; }
+.cell:not(:disabled):hover { filter: brightness(1.35); }
+.cell:disabled { cursor: not-allowed; }
+#next-stop { width: 100%; margin-bottom: 8px; }
+.best-zone strong { color: var(--mint); }
+.best-zone::before { background: var(--mint) !important; }
+@media (max-width: 900px) { .seat-grid { grid-template-columns: repeat(9, minmax(0, 1fr)); } }
+.car.filling { --signal: var(--yellow); }
+.car.full { --signal: var(--red); }
+.rank-pill { background: var(--mint); color: #0f3025; border-radius: 20px; padding: 3px 9px; font-size: 9px; font-weight: 800; letter-spacing: 1px; }
+.rank-pill:empty { display: none; }
+.car.full .seat-count strong, .car.full .availability span { color: var(--red); }
+.cell.locked { opacity: .75; cursor: not-allowed; }

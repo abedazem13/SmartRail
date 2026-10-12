@@ -2,7 +2,7 @@
 
 **Implemented:** 2026-10-09. **Physical validation:** pending with teammates; no hardware was available during implementation.
 
-This demo shows three logical cars (A/B/C), each with three seats, on the laptop's passenger-facing screen. It is not the passenger-flow/dwell-time simulation, an arriving-train integration, a wireless train link, or a reservation system. No separate monitor is required for development; course approval of the final demonstration format remains separate.
+This demo shows 12 logical cars (A–L), each with 108 seats (1296 in total), on the laptop's passenger-facing screen. Two seats are physical (A1 from firmware seat 0/GPIO34, B1 from seat 1/GPIO35); the other 1294 are simulated. The passenger view shows per-car availability and occupancy; the full seat map lives in the controls view, because 1296 seat squares are not readable on a platform display. It is not the passenger-flow/dwell-time simulation, an arriving-train integration, a wireless train link, or a reservation system. No separate monitor is required for development; course approval of the final demonstration format remains separate.
 
 ## Run
 
@@ -30,7 +30,7 @@ Use an existing environment if available; always install and launch with the sam
 | B | Firmware sensor 1 / GPIO35 | Simulated |
 | C | Simulated | Simulated |
 
-**Simulation** is the default. All nine seats are software-controlled and no serial device is opened. The example starts A=1 free, B=3 free, C=0 free.
+**Simulation** is the default. All 1296 seats are software-controlled and no serial device is opened. The example scenario gives each car a fixed number of free seats (A=12, B=3, C=0, D=25, E=48, F=7, G=36, H=18, I=1, J=60, K=29, L=72), scattered inside each car and reproducible run to run. **Next stop** advances the station counter and moves passengers at random within those bounds; presets reset the counter to station 1.
 
 In **hybrid** mode, exactly A1/B1 are real, read-only seats. Open the control view, refresh the port list, select or enter a port, and click Connect hardware. Close Arduino Serial Monitor/Plotter and other serial programs first. Connecting may reset the board; keep both physical seats empty until calibration completes and fresh status arrives (roughly 5 s, not guaranteed).
 
@@ -62,7 +62,7 @@ flowchart LR
     Sensors[Two IR sensors] --> Firmware[ESP32 occupancy decisions]
     Firmware -->|USB serial 115200| Reader[One background serial reader]
     Reader --> Parser[Existing Board parser]
-    Parser --> Model[Thread-safe nine-seat demo model]
+    Parser --> Model[Thread-safe 1296-seat demo model]
     Controls[Browser demo controls] -->|Only simulated seats| Model
     Model -->|Local HTTP, polling every 500 ms| Passenger[Passenger screen]
     Model -->|Same shared snapshot| Controls

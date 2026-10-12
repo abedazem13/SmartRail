@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-10-12 — full-train simulation: 12 cars × 108 seats
+
+- `NUM_CARS=12`, `SEATS_PER_CAR=108`, `REAL_SENSORS=2` (1296 seats) defined once at the top of `PC_software/dashboard_model.py`. Cars are A–L; the two physical sensor seats stay A1 and B1.
+- Added **Next stop** (`POST /api/next_stop`): at each station 5–20% of occupied seats free up, then 5–20% of the free seats fill, chosen at random across all cars. It can never free more than are occupied or fill more than are free, and it never changes a physical sensor seat. A station counter is shown on both views and resets with the scenario presets.
+- Passenger view: per-car free count, occupancy percentage and bar, overall totals, station number, and a highlight of the emptiest car for platform guidance. The clickable 1296-seat map is in the controls view only, with sensor seats outlined.
+- Firmware, `parameters.h` and the serial parsing are unchanged. Real seats are still read-only in hybrid mode and unknown during calibration, on disconnect or when data goes stale.
+- `/api/state` sends per-car aggregates plus one compact states string per car instead of 1296 seat objects: 3.7 KB and ~1.5 ms per poll.
+- Tests: 37 pass (was 30). New coverage for train size, next-stop bounds, empty/full trains, station counter, real seats unaffected by next stop, and the new endpoint. Fixed a bug found while testing: `seat_view()` did not age out stale sensor readings.
+- Physical hardware validation still outstanding — see [the handoff](HARDWARE_DASHBOARD_AGENT_HANDOFF.md).
+
 ## 2026-10-09 — three-car hybrid passenger dashboard
 
 - Added a local laptop passenger view and separate controls: 3 cars × 3 seats, fully simulated or two real sensors (A1/B1) plus seven simulated seats.

@@ -80,6 +80,12 @@ def create_app(model: DemoModel | None = None) -> Flask:
         state.preset(body("name")["name"])
         return jsonify(state.snapshot())
 
+    @app.post("/api/next_stop")
+    def next_stop():
+        # Random boarding/alighting on the simulated seats only.
+        state.next_stop()
+        return jsonify(state.snapshot())
+
     return app
 
 

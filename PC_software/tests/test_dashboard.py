@@ -2,12 +2,17 @@
 
 import itertools
 import queue
+import random
 import threading
 import time
 import unittest
 
 from dashboard import create_app
-from dashboard_model import DemoError, DemoModel, EMPTY, OCCUPIED, SEAT_IDS, UNKNOWN
+from dashboard_model import (AVAILABLE_FREE_MIN, CARS, DemoError, DemoModel, EMPTY,
+                             EXAMPLE_FREE_PER_CAR, NUM_CARS, OCCUPIED, RECOMMEND_CARS,
+                             SEAT_IDS, SEATS_PER_CAR, SENSOR_MAP, TOTAL_SEATS, UNKNOWN)
+
+EXAMPLE_FREE_TOTAL = sum(EXAMPLE_FREE_PER_CAR)
 from dashboard_serial import LineBuffer, SerialWorker
 
 
@@ -18,7 +23,7 @@ def status(a="EMPTY", b="EMPTY"):
 class ModelTests(unittest.TestCase):
     def setUp(self):
         self.now = 100.0
-        self.model = DemoModel(clock=lambda: self.now)
+        self.model = DemoModel(clock=lambda: self.now, rng=random.Random(20261012))
 
     def hybrid(self):
         self.model.configure("hybrid", "FAKE")
@@ -27,32 +32,157 @@ class ModelTests(unittest.TestCase):
         return generation
 
     def seat(self, seat_id):
-        return next(s for c in self.model.snapshot()["cars"] for s in c["seats"] if s["id"] == seat_id)
+        return self.model.seat_view(seat_id)
 
-    def test_initial_example(self):
+    def test_train_size_and_initial_example(self):
         s = self.model.snapshot()
-        self.assertEqual([c["free"] for c in s["cars"]], [1, 3, 0])
-        self.assertEqual([c["status"] for c in s["cars"]], ["limited", "available", "none"])
-        self.assertEqual(s["recommended"], "B")
+        self.assertEqual((s["num_cars"], s["seats_per_car"], s["total"]), (12, 108, 1296))
+        self.assertEqual([c["id"] for c in s["cars"]], list(CARS))
+        self.assertEqual([len(c["states"]) for c in s["cars"]], [SEATS_PER_CAR] * NUM_CARS)
+        self.assertEqual([c["free"] for c in s["cars"]], list(EXAMPLE_FREE_PER_CAR))
+        self.assertEqual(s["free"], EXAMPLE_FREE_TOTAL)
+        self.assertEqual(s["occupied"], TOTAL_SEATS - EXAMPLE_FREE_TOTAL)
+        self.assertEqual(s["station"], 1)
         self.assertEqual(s["unknown"], 0)
+        self.assertEqual(s["real_seats"], sorted(SENSOR_MAP))
+        # The three emptiest cars in the example scenario: L=72, J=60, E=48.
+        self.assertEqual(s["recommended"], ["L", "J", "E"])
+        self.assertIn("Car L (72 free)", s["message"])
+        for car, free in zip(s["cars"], EXAMPLE_FREE_PER_CAR):
+            expected = ("full" if free == 0 else "available"
+                        if free >= AVAILABLE_FREE_MIN else "filling")
+            self.assertEqual(car["status"], expected)
+            self.assertEqual(car["occupied"] + car["free"], SEATS_PER_CAR)
 
-    def test_every_simulation_combination(self):
-        for states in itertools.product((EMPTY, OCCUPIED), repeat=9):
-            for seat_id, state in zip(SEAT_IDS, states):
+    def test_car_status_thresholds(self):
+        self.model.preset("occupied")
+        self.assertEqual(self.model.snapshot()["cars"][0]["status"], "full")
+        # One free seat: about to be full, orange, and still not recommended last.
+        self.model.set_seat("A5", EMPTY)
+        car = self.model.snapshot()["cars"][0]
+        self.assertEqual((car["status"], car["free"]), ("filling", 1))
+        for number in range(6, 6 + AVAILABLE_FREE_MIN - 1):
+            self.model.set_seat(f"A{number}", EMPTY)
+        car = self.model.snapshot()["cars"][0]
+        self.assertEqual((car["status"], car["free"]), ("available", AVAILABLE_FREE_MIN))
+
+    def test_a_car_with_unknown_seats_is_never_called_full(self):
+        g = self.hybrid()
+        self.model.preset("occupied")
+        self.model.feed(g, status(OCCUPIED, OCCUPIED))
+        self.now += 3  # sensor data goes stale -> unknown
+        car = self.model.snapshot()["cars"][0]
+        self.assertEqual(car["status"], "unknown")
+        self.assertEqual(car["free"], 0)
+
+    def test_several_cars_recommended_in_order(self):
+        self.model.preset("occupied")
+        for seat_id, count in (("C", 5), ("F", 9), ("J", 2), ("A", 7)):
+            for number in range(1, count + 1):
+                self.model.set_seat(f"{seat_id}{number}", EMPTY)
+        s = self.model.snapshot()
+        self.assertEqual(len(s["recommended"]), RECOMMEND_CARS)
+        self.assertEqual(s["recommended"], ["F", "A", "C"])  # 9, 7, 5 free
+        self.assertNotIn("J", s["recommended"])  # only 2 free, ranked fourth
+
+    def test_recommendation_ignores_full_cars_and_ties_alphabetically(self):
+        self.model.preset("occupied")
+        for car in ("D", "B", "K"):
+            self.model.set_seat(f"{car}1", EMPTY)  # a three-way tie on 1 free
+        s = self.model.snapshot()
+        self.assertEqual(s["recommended"], ["B", "D", "K"])
+        for car in s["cars"]:
+            if car["id"] not in ("B", "D", "K"):
+                self.assertEqual(car["status"], "full")
+
+    def test_next_stop_moves_passengers_within_bounds(self):
+        self.model.preset("example")
+        for expected_station in range(2, 12):
+            before = self.model.snapshot()
+            result = self.model.next_stop()
+            after = self.model.snapshot()
+            self.assertEqual(result["station"], expected_station)
+            self.assertEqual(after["station"], expected_station)
+            # Never frees more than were occupied, never fills more than are free.
+            self.assertLessEqual(result["alighted"], before["occupied"])
+            self.assertLessEqual(result["boarded"], before["free"] + result["alighted"])
+            self.assertEqual(after["free"], before["free"] + result["alighted"] - result["boarded"])
+            self.assertEqual(after["free"] + after["occupied"], TOTAL_SEATS)
+            self.assertGreaterEqual(after["free"], 0)
+            self.assertGreaterEqual(after["occupied"], 0)
+
+    def test_next_stop_spreads_across_cars(self):
+        self.model.preset("example")
+        before = [c["free"] for c in self.model.snapshot()["cars"]]
+        for _ in range(3):
+            self.model.next_stop()
+        after = [c["free"] for c in self.model.snapshot()["cars"]]
+        self.assertGreater(sum(1 for a, b in zip(before, after) if a != b), 1)
+
+    def test_next_stop_cannot_change_real_seats(self):
+        g = self.hybrid()
+        self.model.feed(g, status(OCCUPIED, EMPTY))
+        for _ in range(5):
+            self.model.next_stop()
+            self.assertEqual(self.seat("A1")["state"], OCCUPIED)
+            self.assertEqual(self.seat("B1")["state"], EMPTY)
+            self.assertFalse(self.seat("A1")["editable"])
+
+    def test_empty_and_full_trains_cannot_overflow(self):
+        for preset, free, occupied in (("empty", TOTAL_SEATS, 0), ("occupied", 0, TOTAL_SEATS)):
+            self.model.preset(preset)
+            self.assertEqual(self.model.snapshot()["free"], free)
+            self.assertEqual(self.model.snapshot()["occupied"], occupied)
+            result = self.model.next_stop()
+            s = self.model.snapshot()
+            self.assertEqual(s["free"] + s["occupied"], TOTAL_SEATS)
+            if preset == "empty":
+                self.assertEqual(result["alighted"], 0)  # nobody to get off
+                self.assertLessEqual(result["boarded"], TOTAL_SEATS)
+            else:
+                # A full train: people get off first, so only those seats fill.
+                self.assertGreater(result["alighted"], 0)
+                self.assertLessEqual(result["boarded"], result["alighted"])
+
+    def test_preset_resets_the_station_counter(self):
+        self.model.next_stop()
+        self.model.next_stop()
+        self.assertEqual(self.model.snapshot()["station"], 3)
+        self.model.preset("example")
+        self.assertEqual(self.model.snapshot()["station"], 1)
+
+    def test_every_simulation_combination_of_a_sample(self):
+        # 2**1296 combinations cannot be enumerated; exhaust nine seats spread
+        # over three cars while the rest of the train stays empty.
+        sample = ("A1", "A2", "A108", "B1", "B54", "B108", "L1", "L2", "L108")
+        for states in itertools.product((EMPTY, OCCUPIED), repeat=len(sample)):
+            self.model.preset("empty")
+            for seat_id, state in zip(sample, states):
                 self.model.set_seat(seat_id, state)
             result = self.model.snapshot()
-            self.assertEqual(result["free"], states.count(EMPTY))
+            self.assertEqual(result["free"], TOTAL_SEATS - states.count(OCCUPIED))
             self.assertEqual(result["unknown"], 0)
-            for index, car in enumerate(result["cars"]):
-                self.assertEqual(car["free"], states[index * 3:index * 3 + 3].count(EMPTY))
+            for car in result["cars"]:
+                occupied = sum(1 for seat_id, state in zip(sample, states)
+                               if seat_id[0] == car["id"] and state == OCCUPIED)
+                self.assertEqual(car["free"], SEATS_PER_CAR - occupied)
+                self.assertEqual(car["states"].count("O"), occupied)
 
-    def test_hybrid_is_two_unknown_seven_simulated(self):
+    def test_hybrid_is_two_real_seats_and_the_rest_simulated(self):
         self.hybrid()
         s = self.model.snapshot()
         self.assertEqual(s["unknown"], 2)
-        self.assertEqual(sum(x["editable"] for c in s["cars"] for x in c["seats"]), 7)
-        self.assertEqual(s["cars"][1]["free"], 2)  # B1 is NOT assumed free.
-        self.assertEqual(s["cars"][1]["status"], "unknown")
+        self.assertEqual(sum(len(c["seats"]) for c in s["cars"]), 2)
+        self.assertEqual(sum(c["states"].count("U") for c in s["cars"]), 2)
+        for seat_id in SENSOR_MAP:
+            self.assertFalse(self.seat(seat_id)["editable"])
+        self.assertTrue(self.seat("A2")["editable"])
+        # An unknown seat is never counted as free.
+        for car in s["cars"][:2]:
+            self.assertEqual(car["status"], "unknown")
+            self.assertEqual(car["free"] + car["occupied"] + car["unknown"], SEATS_PER_CAR)
+        self.assertEqual(sum(1 for seat_id in SEAT_IDS if seat_id not in SENSOR_MAP),
+                         TOTAL_SEATS - 2)
 
     def test_real_seats_read_only(self):
         self.hybrid()
@@ -128,7 +258,9 @@ class ModelTests(unittest.TestCase):
         self.model.configure("simulation")
         self.model.feed(g, status(OCCUPIED, OCCUPIED))
         self.assertFalse(self.model.transport(g, False, "late disconnect"))
-        self.assertEqual(self.seat("A1")["state"], EMPTY)
+        # Back in simulation, A1 shows its simulated state, not the late feed.
+        self.assertEqual(self.seat("A1")["source"], "simulated")
+        self.assertEqual(self.seat("A1")["state"], self.model.simulated["A1"])
         self.model.configure("hybrid", "OTHER")
         self.model.feed(g, status())
         self.assertEqual(self.model.snapshot()["unknown"], 2)
@@ -150,34 +282,35 @@ class ModelTests(unittest.TestCase):
         self.model.configure("simulation")
         self.assertEqual(self.model.snapshot()["warnings"], [])
 
-    def test_no_free_seats_is_not_full_car_claim(self):
+    def test_no_free_seats_reports_no_seats_and_suggests_nothing(self):
         self.model.preset("occupied")
         s = self.model.snapshot()
-        self.assertIsNone(s["recommended"])
+        self.assertEqual(s["recommended"], [])
         self.assertEqual(s["message"], "No free seats currently reported")
 
     def test_unknown_seats_never_recommended_as_available(self):
         self.hybrid()
         self.model.preset("occupied")
         s = self.model.snapshot()
-        self.assertIsNone(s["recommended"])
+        self.assertEqual(s["recommended"], [])
         self.assertEqual(s["free"], 0)
         self.assertEqual(s["unknown"], 2)
 
-    def test_recommendations_preserve_ties_and_never_reserve(self):
-        self.assertEqual(self.model.snapshot()["recommended"], "B")
-        self.model.preset("empty")
+    def test_recommendations_are_stable_and_never_reserve(self):
+        self.assertEqual(self.model.snapshot()["recommended"], ["L", "J", "E"])
+        self.model.preset("empty")  # every car ties: first three alphabetically
         for _ in range(5):
             s = self.model.snapshot()
-            self.assertEqual(s["recommended"], "B")
-            self.assertEqual(s["free"], 9)
+            self.assertEqual(s["recommended"], ["A", "B", "C"])
+            self.assertEqual(s["free"], TOTAL_SEATS)  # suggesting reserves nothing
 
     def test_validation(self):
         for mode, port in (("bad", ""), ("hybrid", ""), ("hybrid", "COM5\n")):
             with self.assertRaises(DemoError):
                 self.model.configure(mode, port)
-        with self.assertRaises(DemoError):
-            self.model.set_seat("D1", EMPTY)
+        for unknown_seat in ("Z1", "A109", "A0", "A", "1A"):
+            with self.assertRaises(DemoError):
+                self.model.set_seat(unknown_seat, EMPTY)
         with self.assertRaises(DemoError):
             self.model.set_seat("A1", UNKNOWN)
         with self.assertRaises(DemoError):
@@ -197,9 +330,10 @@ class ApiTests(unittest.TestCase):
                 self.assertEqual(response.headers["Cache-Control"], "no-store")
 
     def test_independent_clients_share_state(self):
-        self.client.post("/api/seats/A1", json={"state": OCCUPIED})
+        self.client.post("/api/seats/A1", json={"state": EMPTY})
         other = self.app.test_client()
-        self.assertEqual(other.get("/api/state").json["cars"][0]["free"], 0)
+        self.assertEqual(other.get("/api/state").json["cars"][0]["free"],
+                         EXAMPLE_FREE_PER_CAR[0] + 1)
 
     def test_real_seat_write_rejected_by_server(self):
         self.client.post("/api/mode", json={"mode": "hybrid", "port": "FAKE"})
@@ -224,7 +358,19 @@ class ApiTests(unittest.TestCase):
         for body in ([], None, {}, {"state": True}, {"state": []}, {"state": "bad"}):
             response = self.client.post("/api/seats/A1", json=body)
             self.assertIn(response.status_code, (400, 415))
-        self.assertEqual(self.client.get("/api/state").json["free"], 4)
+        self.assertEqual(self.client.get("/api/state").json["free"], EXAMPLE_FREE_TOTAL)
+
+    def test_next_stop_endpoint(self):
+        before = self.client.get("/api/state").json
+        response = self.client.post("/api/next_stop", json={})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json["station"], before["station"] + 1)
+        self.assertEqual(response.json["free"] + response.json["occupied"], TOTAL_SEATS)
+
+    def test_next_stop_rejected_cross_origin(self):
+        response = self.client.post("/api/next_stop", json={},
+                                    headers={"Origin": "https://evil.example"})
+        self.assertEqual(response.status_code, 403)
 
     def test_size_limit_and_non_json(self):
         self.assertEqual(self.client.post("/api/preset", data="name=empty").status_code, 415)
@@ -285,7 +431,7 @@ class SerialWorkerTests(unittest.TestCase):
             first.incoming.put(b"S0 dist= 58.3cm base= 58.4cm noise= 52mV EMP")
             first.incoming.put(b"TY S1 dist= 24.0cm base= 59.0cm noise= 30mV OCCUPIED\n")
             self.wait_for(lambda: model.snapshot()["unknown"] == 0)
-            self.assertEqual(model.snapshot()["cars"][1]["free"], 2)
+            self.assertEqual(model.seat_view("B1")["state"], OCCUPIED)
             first.incoming.put(OSError("fake USB unplug"))
             self.wait_for(lambda: first.closed.is_set())
             self.assertEqual(model.snapshot()["unknown"], 2)

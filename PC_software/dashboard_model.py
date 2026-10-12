@@ -4,20 +4,59 @@ No sensor decisions are made here. Physical seats are read-only in hybrid
 mode; simulated state and confirmed hardware state never replace each other.
 """
 
+import random
 import threading
 import time
 from collections.abc import Callable
 
 from seat_live import Board, EMPTY, OCCUPIED, UNKNOWN, STALE_S
 
-CARS = ("A", "B", "C")
-SEAT_IDS = tuple(f"{car}{number}" for car in CARS for number in range(1, 4))
+# ---- train size (the only place these numbers are defined) ----
+NUM_CARS = 12
+SEATS_PER_CAR = 108
+REAL_SENSORS = 2
+TOTAL_SEATS = NUM_CARS * SEATS_PER_CAR  # 1296
+
+CARS = tuple(chr(ord("A") + index) for index in range(NUM_CARS))  # A..L
+SEAT_IDS = tuple(f"{car}{number}" for car in CARS
+                 for number in range(1, SEATS_PER_CAR + 1))
+# Physical sensors: firmware seat 0 -> GPIO34 -> A1, seat 1 -> GPIO35 -> B1.
 SENSOR_MAP = {"A1": 0, "B1": 1}
-EXAMPLE = dict(zip(SEAT_IDS, (
-    EMPTY, OCCUPIED, OCCUPIED,
-    EMPTY, EMPTY, EMPTY,
-    OCCUPIED, OCCUPIED, OCCUPIED,
-)))
+assert len(SENSOR_MAP) == REAL_SENSORS
+
+# A car is "available" (green) with this many confirmed free seats,
+# "filling" (orange, about to be full) with 1..N-1, and "full" (red) with 0.
+# Unknown seats are never counted as free, so a car with any unknown seat is
+# reported as "unknown" (grey) rather than being called full.
+AVAILABLE_FREE_MIN = 10
+
+# How many cars the platform display suggests at once.
+RECOMMEND_CARS = 3
+
+# Each stop: this fraction of occupied seats leaves, then the same fraction of
+# free seats fills. Never more than exists, so a car cannot overfill.
+STOP_MIN_FRACTION = 0.05
+STOP_MAX_FRACTION = 0.20
+
+# Demo starting scenario: free seats per car, scattered inside each car so the
+# seat map does not look sorted. Deterministic, so demos and tests repeat.
+EXAMPLE_FREE_PER_CAR = (12, 3, 0, 25, 48, 7, 36, 18, 1, 60, 29, 72)
+_SCATTER = 37  # coprime with 108, so exactly `free` seats come out free
+
+
+def example_states() -> dict:
+    """The demo scenario as {seat_id: EMPTY/OCCUPIED}."""
+    states = {}
+    for index, car in enumerate(CARS):
+        free = EXAMPLE_FREE_PER_CAR[index]
+        for number in range(1, SEATS_PER_CAR + 1):
+            scattered = (number * _SCATTER) % SEATS_PER_CAR
+            states[f"{car}{number}"] = EMPTY if scattered < free else OCCUPIED
+    return states
+
+
+EXAMPLE = example_states()
+SIMULATION_DETAIL = f"All {TOTAL_SEATS} seats are controlled in software."
 
 
 class DemoError(ValueError):
@@ -25,19 +64,22 @@ class DemoError(ValueError):
 
 
 class DemoModel:
-    def __init__(self, clock: Callable[[], float] = time.monotonic):
+    def __init__(self, clock: Callable[[], float] = time.monotonic,
+                 rng: random.Random | None = None):
         self._lock = threading.RLock()
         self._clock = clock
+        self._rng = rng or random.Random()
         self.mode = "simulation"
         self.port = ""
         self.generation = 0
+        self.station = 1
         self.simulated = EXAMPLE.copy()
         self.board = Board({1: [0], 2: [1]})
         self.connection = "simulation"
-        self.detail = "All nine seats are controlled in software."
+        self.detail = SIMULATION_DETAIL
         self.last_message = ""
         self.warnings: list[str] = []
-        self._recommended = None
+        self._recommended = []
 
     def configure(self, mode: str, port: str = "") -> None:
         if mode not in ("simulation", "hybrid"):
@@ -53,10 +95,10 @@ class DemoModel:
             self.board = Board({1: [0], 2: [1]})
             self.connection = "connecting" if mode == "hybrid" else "simulation"
             self.detail = ("Opening port. Keep both physical seats empty during calibration."
-                           if mode == "hybrid" else "All nine seats are controlled in software.")
+                           if mode == "hybrid" else SIMULATION_DETAIL)
             self.last_message = ""
             self.warnings.clear()
-            self._recommended = None
+            self._recommended = []
 
     def serial_config(self) -> tuple[int, str, str]:
         with self._lock:
@@ -119,47 +161,127 @@ class DemoModel:
                     continue
                 self.simulated[seat_id] = (EXAMPLE[seat_id] if name == "example"
                                            else EMPTY if name == "empty" else OCCUPIED)
+            self.station = 1
+
+    def _simulated_ids(self) -> list:
+        """Seat ids the simulation may change: never a live sensor seat."""
+        return [seat_id for seat_id in SEAT_IDS
+                if not (self.mode == "hybrid" and seat_id in SENSOR_MAP)]
+
+    def _stop_count(self, available: int) -> int:
+        """How many passengers move, as a fraction of what is actually there."""
+        if available <= 0:
+            return 0
+        low = max(1, round(available * STOP_MIN_FRACTION))
+        high = max(low, round(available * STOP_MAX_FRACTION))
+        return min(available, self._rng.randint(low, high))
+
+    def next_stop(self) -> dict:
+        """Simulate a station stop: some passengers get off, then some board.
+
+        Random but bounded: never frees more seats than are occupied and never
+        fills more than are free. Physical sensor seats are never touched.
+        """
+        with self._lock:
+            editable = self._simulated_ids()
+            occupied = [s for s in editable if self.simulated[s] == OCCUPIED]
+            free = [s for s in editable if self.simulated[s] == EMPTY]
+
+            alighting = self._stop_count(len(occupied))
+            for seat_id in self._rng.sample(occupied, alighting):
+                self.simulated[seat_id] = EMPTY
+                free.append(seat_id)
+
+            boarding = self._stop_count(len(free))
+            for seat_id in self._rng.sample(free, boarding):
+                self.simulated[seat_id] = OCCUPIED
+
+            self.station += 1
+            return {"station": self.station, "alighted": alighting,
+                    "boarded": boarding, "simulated_seats": len(editable)}
+
+    def seat_view(self, seat_id: str) -> dict:
+        """One seat as the UI sees it. Sensor seats carry their diagnostics."""
+        with self._lock:
+            if seat_id not in self.simulated:
+                raise DemoError("Unknown seat.")
+            now = self._clock()
+            self.board.check_stale(now)
+            return self._seat_view(seat_id, now)
+
+    def _seat_view(self, seat_id: str, now: float) -> dict:
+        sensor = SENSOR_MAP.get(seat_id)
+        real = self.mode == "hybrid" and sensor is not None
+        item = {"id": seat_id, "car": seat_id[0],
+                "source": "sensor" if real else "simulated",
+                "sensor_id": sensor, "state": self.simulated[seat_id],
+                "editable": not real, "reason": "operator-controlled",
+                "distance_cm": None, "noise_mv": None, "pending": False, "age_s": None}
+        if real:
+            seat = self.board.seats[sensor]
+            state, reason = seat.state, seat.reason
+            if self.board.calibrating:
+                state, reason = UNKNOWN, "calibrating; keep both seats empty"
+            elif self.connection != "connected":
+                state, reason = UNKNOWN, "board disconnected"
+            item.update(state=state, reason=reason, distance_cm=seat.dist,
+                        noise_mv=seat.noise,
+                        pending=seat.pending and state != UNKNOWN,
+                        age_s=None if seat.last_seen is None else round(now - seat.last_seen, 2))
+        return item
 
     def snapshot(self) -> dict:
+        """Current state for the UI.
+
+        With 1296 seats the per-seat detail would be too large to send twice a
+        second, so each car carries a compact `states` string (one character
+        per seat: E/O/U) and detailed entries only for the sensor seats.
+        """
         with self._lock:
             now = self._clock()
             self.board.check_stale(now)
-            seats = []
-            for seat_id in SEAT_IDS:
-                sensor = SENSOR_MAP.get(seat_id)
-                real = self.mode == "hybrid" and sensor is not None
-                item = {"id": seat_id, "car": seat_id[0], "source": "sensor" if real else "simulated",
-                        "sensor_id": sensor, "state": self.simulated[seat_id], "editable": not real,
-                        "reason": "operator-controlled", "distance_cm": None,
-                        "noise_mv": None, "pending": False, "age_s": None}
-                if real:
-                    seat = self.board.seats[sensor]
-                    state, reason = seat.state, seat.reason
-                    if self.board.calibrating:
-                        state, reason = UNKNOWN, "calibrating; keep both seats empty"
-                    elif self.connection != "connected":
-                        state, reason = UNKNOWN, "board disconnected"
-                    item.update(state=state, reason=reason, distance_cm=seat.dist,
-                                noise_mv=seat.noise, pending=seat.pending and state != UNKNOWN,
-                                age_s=None if seat.last_seen is None else round(now - seat.last_seen, 2))
-                seats.append(item)
+            letter = {EMPTY: "E", OCCUPIED: "O", UNKNOWN: "U"}
 
             cars = []
             for car in CARS:
-                members = [s for s in seats if s["car"] == car]
-                free = sum(s["state"] == EMPTY for s in members)
-                unknown = sum(s["state"] == UNKNOWN for s in members)
-                status = "unknown" if unknown else "none" if free == 0 else "limited" if free == 1 else "available"
-                cars.append({"id": car, "zone": car, "free": free, "unknown": unknown,
-                             "total": 3, "status": status, "seats": members})
+                states = []
+                sensor_seats = []
+                for number in range(1, SEATS_PER_CAR + 1):
+                    seat_id = f"{car}{number}"
+                    if self.mode == "hybrid" and seat_id in SENSOR_MAP:
+                        view = self._seat_view(seat_id, now)
+                        sensor_seats.append(view)
+                        states.append(letter[view["state"]])
+                    else:
+                        if seat_id in SENSOR_MAP:
+                            sensor_seats.append(self._seat_view(seat_id, now))
+                        states.append(letter[self.simulated[seat_id]])
+                joined = "".join(states)
+                free = joined.count("E")
+                unknown = joined.count("U")
+                occupied = joined.count("O")
+                status = ("unknown" if unknown else "full" if free == 0
+                          else "available" if free >= AVAILABLE_FREE_MIN else "filling")
+                cars.append({"id": car, "zone": car, "free": free,
+                             "occupied": occupied, "unknown": unknown,
+                             "total": SEATS_PER_CAR,
+                             "occupancy_pct": round(occupied * 100 / SEATS_PER_CAR, 1),
+                             "status": status, "states": joined,
+                             "seats": sensor_seats})
 
-            most_free = max(car["free"] for car in cars)
-            choices = [car["id"] for car in cars if car["free"] == most_free] if most_free else []
-            if self._recommended not in choices:
-                self._recommended = choices[0] if choices else None
+            # The emptiest cars first, ties alphabetically. A suggestion only:
+            # nothing is reserved or decremented, and a car is never suggested
+            # on the strength of unknown seats.
+            ranked = sorted((car for car in cars if car["free"] > 0),
+                            key=lambda car: (-car["free"], car["id"]))
+            self._recommended = [car["id"] for car in ranked[:RECOMMEND_CARS]]
             unknown_total = sum(car["unknown"] for car in cars)
+            free_total = sum(car["free"] for car in cars)
+            occupied_total = sum(car["occupied"] for car in cars)
             if self._recommended:
-                message = f"More confirmed free seats in Car {self._recommended} · Zone {self._recommended}"
+                named = ", ".join(f"Car {car['id']} ({car['free']} free)"
+                                  for car in ranked[:RECOMMEND_CARS])
+                message = f"Most confirmed free seats: {named}"
             elif unknown_total:
                 message = "Availability incomplete — waiting for sensor data"
             else:
@@ -169,13 +291,17 @@ class DemoModel:
             if self.mode == "hybrid" and link == "connected":
                 if self.board.calibrating:
                     link = "calibrating"
-                elif any(s["source"] == "sensor" and s["state"] == UNKNOWN for s in seats):
+                elif any(s["state"] == UNKNOWN for car in cars for s in car["seats"]):
                     link = "waiting"
                 else:
                     link = "live"
             return {"mode": self.mode, "generation": self.generation, "cars": cars,
-                    "free": sum(car["free"] for car in cars), "unknown": unknown_total, "total": 9,
+                    "free": free_total, "occupied": occupied_total,
+                    "unknown": unknown_total, "total": TOTAL_SEATS,
+                    "occupancy_pct": round(occupied_total * 100 / TOTAL_SEATS, 1),
+                    "station": self.station, "num_cars": NUM_CARS,
+                    "seats_per_car": SEATS_PER_CAR, "real_seats": sorted(SENSOR_MAP),
                     "recommended": self._recommended, "message": message,
                     "connection": {"status": link, "port": self.port, "detail": self.detail,
-                                   "last_message": self.last_message}, "warnings": self.warnings.copy(),
-                    "stale_s": STALE_S}
+                                   "last_message": self.last_message},
+                    "warnings": self.warnings.copy(), "stale_s": STALE_S}
