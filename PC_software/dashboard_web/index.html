@@ -32,7 +32,7 @@
 
     <div class="status-strip">
       <span class="demo-label">PROTOTYPE · NOT A LIVE TRAIN SERVICE</span>
-      <span class="connection"><span id="connection-dot" class="dot unknown"></span><span id="connection-text">Connecting to dashboard…</span></span>
+      <span class="connection"><span id="boarding-badge" class="boarding-badge" hidden>BOARDING…</span><span id="auto-badge" class="auto-badge" hidden></span><span id="connection-dot" class="dot unknown"></span><span id="connection-text">Connecting to dashboard…</span></span>
     </div>
     <div id="offline" class="alert" role="alert" hidden>Dashboard connection lost. Availability is unavailable until the server reconnects.</div>
     <div id="error" class="alert" role="alert" hidden></div>
@@ -98,7 +98,17 @@
             <h3>2. Set the scene</h3>
             <p>Click any seat in the maps above to change it. Real sensor seats are locked in hybrid mode.</p>
             <button type="button" id="next-stop" class="primary-button">Next stop ▸ passengers board and alight</button>
-            <p class="helper">Each stop frees 5–20% of occupied seats, then fills 5–20% of free ones, spread at random across all cars. Physical sensor seats are never changed.</p>
+            <div class="port-row auto-row">
+              <label for="auto-interval">Run a stop automatically every</label>
+              <select id="auto-interval">
+                <option value="5">5 seconds</option>
+                <option value="10" selected>10 seconds</option>
+                <option value="15">15 seconds</option>
+                <option value="30">30 seconds</option>
+              </select>
+              <button type="button" id="auto-toggle" class="secondary-button">Start auto stops</button>
+            </div>
+            <p class="helper" id="auto-help">Each stop frees 5–20% of occupied seats, then fills 5–20% of free ones, spread at random across all cars, applied over about 2.4 seconds so you can watch it. Physical sensor seats are never changed. Automatic stops run while a display tab is open.</p>
             <div class="scenario-buttons">
               <button type="button" data-preset="example" class="secondary-button">Example scenario · station 1</button>
               <button type="button" data-preset="empty" class="secondary-button">Empty simulated seats</button>

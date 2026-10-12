@@ -8,6 +8,8 @@
 - Firmware, `parameters.h` and the serial parsing are unchanged. Real seats are still read-only in hybrid mode and unknown during calibration, on disconnect or when data goes stale.
 - `/api/state` sends per-car aggregates plus one compact states string per car instead of 1296 seat objects: 3.7 KB and ~1.5 ms per poll.
 - Tests: 37 pass (was 30). New coverage for train size, next-stop bounds, empty/full trains, station counter, real seats unaffected by next stop, and the new endpoint. Fixed a bug found while testing: `seat_view()` did not age out stale sensor readings.
+- **Next stop** is applied over ~2.4 s (passengers off, then on) instead of in one jump, with a BOARDING badge while it runs; an operator click, a preset or a mode change cancels whatever is still in progress.
+- **Auto stops** (, 5–30 s from the UI, 3–300 s accepted): repeats the stop automatically for an unattended demo. Driven by display polling, so it runs only while a tab is open, and it never touches the sensor seats.
 - Physical hardware validation still outstanding — see [the handoff](HARDWARE_DASHBOARD_AGENT_HANDOFF.md).
 
 ## 2026-10-09 — three-car hybrid passenger dashboard

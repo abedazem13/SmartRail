@@ -81,6 +81,24 @@ def main():
             controls.locator('[data-preset="example"]').click()
             expect(display.locator("#station-number")).to_have_text("1")
 
+            # Automatic stops: the badge appears on both views and stops run
+            # without clicking. 5 s is the shortest option in the UI.
+            controls.locator("#auto-interval").select_option("5")
+            controls.locator("#auto-toggle").click()
+            expect(controls.locator("#auto-toggle")).to_have_text("Stop auto stops")
+            expect(display.locator("#auto-badge")).to_have_text("AUTO · EVERY 5s")
+            clock[0] += 5.1
+            expect(display.locator("#station-number")).to_have_text("2")
+            # A stop lands over about 2.4 s, so the boarding badge is visible.
+            expect(display.locator("#boarding-badge")).to_be_visible()
+            clock[0] += 3
+            expect(display.locator("#boarding-badge")).to_be_hidden()
+            controls.locator("#auto-toggle").click()
+            expect(display.locator("#auto-badge")).to_be_hidden()
+            clock[0] += 30
+            expect(display.locator("#station-number")).to_have_text("2")  # stopped
+            controls.locator('[data-preset="example"]').click()
+
             screenshot = Path(tempfile.gettempdir()) / "smartrail-passenger-display.png"
             display.screenshot(path=str(screenshot), full_page=True)
             display.set_viewport_size({"width": 1366, "height": 768})

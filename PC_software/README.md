@@ -2,7 +2,7 @@
 
 ### New: graphical 12-car dashboard
 
-The [dashboard guide](../Documentation/17_HYBRID_DASHBOARD.md) describes the passenger screen and separate demo controls: 12 cars × 108 seats (1296 total), simulation without hardware, or two real sensors (A1, B1) plus 1294 simulated seats over USB. A **Next stop** button simulates a station: 5–20% of occupied seats free up, then 5–20% of free seats fill, at random across all cars, never touching the sensor seats. Run `dashboard.py` after installing `requirements.txt`; the guide includes complete setup commands. Open http://127.0.0.1:8765/ and http://127.0.0.1:8765/controls.
+The [dashboard guide](../Documentation/17_HYBRID_DASHBOARD.md) describes the passenger screen and separate demo controls: 12 cars × 108 seats (1296 total), simulation without hardware, or two real sensors (A1, B1) plus 1294 simulated seats over USB. A **Next stop** button simulates a station: 5–20% of occupied seats free up, then 5–20% of free seats fill, at random across all cars, never touching the sensor seats. Each stop is applied over about 2.4 seconds, so the seats visibly empty and then fill, and stops can run automatically every 5–30 seconds for an unattended demo. Run `dashboard.py` after installing `requirements.txt`; the guide includes complete setup commands. Open http://127.0.0.1:8765/ and http://127.0.0.1:8765/controls.
 
 **Hardware is not verified yet.** Teammates should give [the hardware testing handoff](../Documentation/HARDWARE_DASHBOARD_AGENT_HANDOFF.md) to their AI agent. Do not run a console serial reader and the hybrid dashboard on the same port simultaneously.
 

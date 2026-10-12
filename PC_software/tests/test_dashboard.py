@@ -10,7 +10,8 @@ import unittest
 from dashboard import create_app
 from dashboard_model import (AVAILABLE_FREE_MIN, CARS, DemoError, DemoModel, EMPTY,
                              EXAMPLE_FREE_PER_CAR, NUM_CARS, OCCUPIED, RECOMMEND_CARS,
-                             SEAT_IDS, SEATS_PER_CAR, SENSOR_MAP, TOTAL_SEATS, UNKNOWN)
+                             SEAT_IDS, SEATS_PER_CAR, SENSOR_MAP, STOP_ANIMATION_S,
+                             TOTAL_SEATS, UNKNOWN)
 
 EXAMPLE_FREE_TOTAL = sum(EXAMPLE_FREE_PER_CAR)
 from dashboard_serial import LineBuffer, SerialWorker
@@ -95,12 +96,16 @@ class ModelTests(unittest.TestCase):
             if car["id"] not in ("B", "D", "K"):
                 self.assertEqual(car["status"], "full")
 
+    def finish_stop(self):
+        self.now += STOP_ANIMATION_S + 0.01
+        return self.model.snapshot()
+
     def test_next_stop_moves_passengers_within_bounds(self):
         self.model.preset("example")
         for expected_station in range(2, 12):
             before = self.model.snapshot()
             result = self.model.next_stop()
-            after = self.model.snapshot()
+            after = self.finish_stop()
             self.assertEqual(result["station"], expected_station)
             self.assertEqual(after["station"], expected_station)
             # Never frees more than were occupied, never fills more than are free.
@@ -116,6 +121,7 @@ class ModelTests(unittest.TestCase):
         before = [c["free"] for c in self.model.snapshot()["cars"]]
         for _ in range(3):
             self.model.next_stop()
+            self.finish_stop()
         after = [c["free"] for c in self.model.snapshot()["cars"]]
         self.assertGreater(sum(1 for a, b in zip(before, after) if a != b), 1)
 
@@ -124,6 +130,8 @@ class ModelTests(unittest.TestCase):
         self.model.feed(g, status(OCCUPIED, EMPTY))
         for _ in range(5):
             self.model.next_stop()
+            self.finish_stop()
+            self.model.feed(g, status(OCCUPIED, EMPTY))  # the board keeps reporting
             self.assertEqual(self.seat("A1")["state"], OCCUPIED)
             self.assertEqual(self.seat("B1")["state"], EMPTY)
             self.assertFalse(self.seat("A1")["editable"])
@@ -134,7 +142,7 @@ class ModelTests(unittest.TestCase):
             self.assertEqual(self.model.snapshot()["free"], free)
             self.assertEqual(self.model.snapshot()["occupied"], occupied)
             result = self.model.next_stop()
-            s = self.model.snapshot()
+            s = self.finish_stop()
             self.assertEqual(s["free"] + s["occupied"], TOTAL_SEATS)
             if preset == "empty":
                 self.assertEqual(result["alighted"], 0)  # nobody to get off
@@ -146,10 +154,83 @@ class ModelTests(unittest.TestCase):
 
     def test_preset_resets_the_station_counter(self):
         self.model.next_stop()
+        self.finish_stop()
         self.model.next_stop()
+        self.finish_stop()
         self.assertEqual(self.model.snapshot()["station"], 3)
         self.model.preset("example")
         self.assertEqual(self.model.snapshot()["station"], 1)
+
+    def test_a_stop_is_applied_gradually_not_in_one_jump(self):
+        self.model.preset("example")
+        start = self.model.snapshot()["free"]
+        result = self.model.next_stop()
+        self.assertTrue(self.model.snapshot()["boarding"])
+        self.assertEqual(self.model.snapshot()["free"], start)  # nothing yet
+
+        # First half: passengers leave, so free seats rise above the start.
+        self.now += STOP_ANIMATION_S / 2
+        midpoint = self.model.snapshot()
+        self.assertGreater(midpoint["free"], start)
+        self.assertEqual(midpoint["free"], start + result["alighted"])
+
+        # Second half: others board, ending at the stop's net result.
+        end = self.finish_stop()
+        self.assertEqual(end["free"], start + result["alighted"] - result["boarded"])
+        self.assertFalse(end["boarding"])
+        self.assertEqual(end["free"] + end["occupied"], TOTAL_SEATS)
+
+    def test_a_click_overrides_a_stop_in_progress(self):
+        self.model.preset("occupied")
+        self.model.next_stop()  # schedules a batch of seats to empty
+        self.model.set_seat("A7", OCCUPIED)
+        self.finish_stop()
+        self.assertEqual(self.seat("A7")["state"], OCCUPIED)
+
+    def test_presets_and_mode_changes_cancel_a_stop_in_progress(self):
+        self.model.next_stop()
+        self.model.preset("empty")
+        self.finish_stop()
+        self.assertEqual(self.model.snapshot()["free"], TOTAL_SEATS)
+        self.model.next_stop()
+        self.model.configure("hybrid", "FAKE")
+        self.model.configure("simulation")
+        before = self.model.snapshot()["free"]
+        self.finish_stop()
+        self.assertEqual(self.model.snapshot()["free"], before)
+
+    def test_automatic_stops_run_on_their_interval(self):
+        self.assertEqual(self.model.snapshot()["auto_interval"], 0)
+        self.model.configure_auto(10)
+        self.assertEqual(self.model.snapshot()["auto_interval"], 10)
+        self.assertEqual(self.model.snapshot()["station"], 1)  # not yet due
+        self.now += 10.1
+        self.assertEqual(self.model.snapshot()["station"], 2)
+        self.now += 5
+        self.assertEqual(self.model.snapshot()["station"], 2)  # no double stop
+        self.now += 5.1
+        self.assertEqual(self.model.snapshot()["station"], 3)
+        self.model.configure_auto(0)
+        self.now += 100
+        self.assertEqual(self.model.snapshot()["station"], 3)  # stopped
+
+    def test_automatic_stops_never_touch_real_seats(self):
+        g = self.hybrid()
+        self.model.feed(g, status(OCCUPIED, EMPTY))
+        self.model.configure_auto(3)
+        for _ in range(4):
+            self.now += 3.1
+            self.model.snapshot()
+            self.model.feed(g, status(OCCUPIED, EMPTY))
+        self.assertGreater(self.model.snapshot()["station"], 1)
+        self.assertEqual(self.seat("A1")["state"], OCCUPIED)
+        self.assertEqual(self.seat("B1")["state"], EMPTY)
+
+    def test_auto_interval_validation(self):
+        for bad in ("abc", None, 1, 0.5, 1000):
+            with self.assertRaises(DemoError):
+                self.model.configure_auto(bad)
+        self.assertEqual(self.model.snapshot()["auto_interval"], 0)
 
     def test_every_simulation_combination_of_a_sample(self):
         # 2**1296 combinations cannot be enumerated; exhaust nine seats spread
@@ -366,6 +447,15 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json["station"], before["station"] + 1)
         self.assertEqual(response.json["free"] + response.json["occupied"], TOTAL_SEATS)
+
+    def test_auto_endpoint(self):
+        self.assertEqual(self.client.post("/api/auto", json={"interval": "10"}).status_code, 200)
+        self.assertEqual(self.client.get("/api/state").json["auto_interval"], 10)
+        self.assertEqual(self.client.post("/api/auto", json={"interval": "0"}).status_code, 200)
+        self.assertEqual(self.client.get("/api/state").json["auto_interval"], 0)
+        for bad in ({"interval": "9999"}, {"interval": "x"}, {}, {"interval": 10}):
+            self.assertIn(self.client.post("/api/auto", json=bad).status_code, (400, 415))
+        self.assertEqual(self.client.get("/api/state").json["auto_interval"], 0)
 
     def test_next_stop_rejected_cross_origin(self):
         response = self.client.post("/api/next_stop", json={},

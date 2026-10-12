@@ -86,6 +86,12 @@ def create_app(model: DemoModel | None = None) -> Flask:
         state.next_stop()
         return jsonify(state.snapshot())
 
+    @app.post("/api/auto")
+    def auto():
+        # Seconds between automatic stops; "0" turns it off.
+        state.configure_auto(body("interval")["interval"])
+        return jsonify(state.snapshot())
+
     return app
 
 

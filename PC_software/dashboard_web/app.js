@@ -132,6 +132,13 @@ function render(data) {
     ? `${data.total} seats · ${data.unknown} unknown · ${data.occupancy_pct}% occupied`
     : `Across ${data.num_cars} cars · ${data.total} seats · ${data.occupancy_pct}% occupied`);
   text("station-number", String(data.station));
+  $("boarding-badge").hidden = !data.boarding;
+  $("auto-badge").hidden = !data.auto_interval;
+  text("auto-badge", data.auto_interval ? `AUTO · EVERY ${data.auto_interval}s` : "");
+  if (controlsView) {
+    text("auto-toggle", data.auto_interval ? "Stop auto stops" : "Start auto stops");
+    $("auto-toggle").className = data.auto_interval ? "primary-button" : "secondary-button";
+  }
   text("guidance-text", data.message);
   text("train-subtitle", `${data.num_cars} cars · ${data.seats_per_car} seats each · ${data.total} total`);
   text("mode-label", data.mode === "hybrid" ? "Hybrid mode" : "Simulation mode");
@@ -197,6 +204,8 @@ function disconnected() {
   text("hardware-detail", "Dashboard offline. Sensor diagnostics unavailable.");
   text("last-message", "Dashboard offline — no current board message.");
   text("station-number", "—");
+  $("boarding-badge").hidden = true;
+  $("auto-badge").hidden = true;
   document.querySelectorAll(".diagnostic-grid > div").forEach((node) => { node.textContent = "Offline — diagnostics unavailable."; });
   $("connection-dot").className = "dot unknown";
   drawn = {};
@@ -288,6 +297,12 @@ if (controlsView) {
   $("hybrid").addEventListener("click", () => mutate("/api/mode", { mode: "hybrid", port: $("serial-port").value.trim() }));
   $("refresh-ports").addEventListener("click", refreshPorts);
   $("next-stop").addEventListener("click", () => mutate("/api/next_stop", {}));
+  $("auto-toggle").addEventListener("click", () => mutate("/api/auto", {
+    interval: snapshot?.auto_interval ? "0" : $("auto-interval").value,
+  }));
+  $("auto-interval").addEventListener("change", () => {
+    if (snapshot?.auto_interval) mutate("/api/auto", { interval: $("auto-interval").value });
+  });
   document.querySelectorAll("[data-preset]").forEach((button) => {
     button.addEventListener("click", () => mutate("/api/preset", { name: button.dataset.preset }));
   });
