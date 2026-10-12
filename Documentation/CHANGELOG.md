@@ -10,6 +10,8 @@
 - Tests: 37 pass (was 30). New coverage for train size, next-stop bounds, empty/full trains, station counter, real seats unaffected by next stop, and the new endpoint. Fixed a bug found while testing: `seat_view()` did not age out stale sensor readings.
 - **Next stop** is applied over ~2.4 s (passengers off, then on) instead of in one jump, with a BOARDING badge while it runs; an operator click, a preset or a mode change cancels whatever is still in progress.
 - **Auto stops** (, 5–30 s from the UI, 3–300 s accepted): repeats the stop automatically for an unattended demo. Driven by display polling, so it runs only while a tab is open, and it never touches the sensor seats.
+- **Network display** (`--host 0.0.0.0`, `start_dashboard_network.bat`): the passenger view can be opened from a phone or second laptop as the platform sign. The controls page, `/api/ports` and every POST are refused unless the request comes from the machine running the dashboard. Default is unchanged: 127.0.0.1 only.
+- Added `start_dashboard.bat` for one-click start.
 - Physical hardware validation still outstanding — see [the handoff](HARDWARE_DASHBOARD_AGENT_HANDOFF.md).
 
 ## 2026-10-09 — three-car hybrid passenger dashboard

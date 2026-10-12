@@ -1,6 +1,7 @@
 """Local SmartRail passenger display. Run this file, then open the printed URL."""
 
 import argparse
+import socket
 from pathlib import Path
 
 from flask import Flask, jsonify, request
@@ -13,10 +14,25 @@ from dashboard_serial import SerialWorker
 WEB = Path(__file__).resolve().parent / "dashboard_web"
 
 
-def create_app(model: DemoModel | None = None) -> Flask:
+def create_app(model: DemoModel | None = None, extra_hosts: tuple = ()) -> Flask:
     app = Flask(__name__, static_folder=str(WEB), static_url_path="/assets")
-    app.config.update(MAX_CONTENT_LENGTH=4096, TRUSTED_HOSTS=["127.0.0.1", "localhost"])
+    # Requests for any other host name are refused by Flask. --host adds this
+    # machine's network address, so a phone can load the passenger display.
+    app.config.update(MAX_CONTENT_LENGTH=4096,
+                      TRUSTED_HOSTS=["127.0.0.1", "localhost", *extra_hosts])
     state = model if model is not None else DemoModel()
+
+    @app.before_request
+    def controls_stay_on_this_machine():
+        # With --host the passenger display is reachable from the network, so
+        # anything that changes the demo (or lists the machine's serial ports)
+        # is refused unless the request came from this computer. There is no
+        # password: viewing is public, control is local.
+        if request.remote_addr in ("127.0.0.1", "::1", None):
+            return None
+        if request.method != "GET" or request.path in ("/controls", "/api/ports"):
+            return jsonify(error="Controls are available only on the computer "
+                                 "running the dashboard."), 403
 
     @app.before_request
     def local_requests_only():
@@ -95,9 +111,23 @@ def create_app(model: DemoModel | None = None) -> Flask:
     return app
 
 
+def local_address() -> str:
+    """This machine's address on the local network, for phones to open."""
+    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as probe:
+        try:
+            probe.connect(("192.0.2.1", 80))  # no packet is sent
+            return probe.getsockname()[0]
+        except OSError:
+            return socket.gethostbyname(socket.gethostname())
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="SmartRail local passenger dashboard")
     parser.add_argument("--http-port", type=int, default=8765)
+    parser.add_argument("--host", default="127.0.0.1",
+                        help="0.0.0.0 also serves the passenger view to this "
+                             "network (phones, a second laptop). The controls "
+                             "page stays on this computer.")
     parser.add_argument("--serial-port", help="Start hybrid mode on this port, e.g. COM5")
     args = parser.parse_args()
     if not 1 <= args.http_port <= 65535:
@@ -109,9 +139,15 @@ def main() -> None:
     worker.start()
     print(f"Passenger display: http://127.0.0.1:{args.http_port}/", flush=True)
     print(f"Demo controls:     http://127.0.0.1:{args.http_port}/controls", flush=True)
-    print("Local demo only. Ctrl+C to stop. No hardware required in simulation mode.", flush=True)
+    network_hosts = []
+    if args.host not in ("127.0.0.1", "localhost"):
+        network_hosts.append(local_address())
+        print(f"On this network:   http://{network_hosts[0]}:{args.http_port}/  "
+              "(display only; the controls stay on this computer)", flush=True)
+    print("Ctrl+C to stop. No hardware required in simulation mode.", flush=True)
     try:
-        serve(create_app(model), host="127.0.0.1", port=args.http_port, threads=4)
+        serve(create_app(model, extra_hosts=tuple(network_hosts)),
+              host=args.host, port=args.http_port, threads=4)
     finally:
         worker.stop()
 

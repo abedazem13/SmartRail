@@ -435,6 +435,21 @@ class ApiTests(unittest.TestCase):
     def test_foreign_host_blocked(self):
         self.assertEqual(self.client.get("/api/state", headers={"Host": "evil.example"}).status_code, 400)
 
+    def test_network_address_is_served_only_when_configured(self):
+        phone = {"REMOTE_ADDR": "192.168.1.50"}
+        lan = {"Host": "10.0.0.14:8765"}
+        # Default: the laptop address only, so a phone request is refused.
+        self.assertEqual(self.client.get("/", headers=lan, environ_base=phone).status_code, 400)
+        # With --host the machine network address is trusted for viewing.
+        shared = create_app(self.model, extra_hosts=("10.0.0.14",)).test_client()
+        self.assertEqual(shared.get("/", headers=lan, environ_base=phone).status_code, 200)
+        self.assertEqual(shared.get("/api/state", headers=lan, environ_base=phone).status_code, 200)
+        # Controlling it from the phone is still refused, and so is any other host.
+        self.assertEqual(shared.get("/controls", headers=lan, environ_base=phone).status_code, 403)
+        self.assertEqual(shared.post("/api/next_stop", json={}, headers=lan,
+                                     environ_base=phone).status_code, 403)
+        self.assertEqual(shared.get("/", headers={"Host": "evil.example"}).status_code, 400)
+
     def test_bad_input_never_mutates(self):
         for body in ([], None, {}, {"state": True}, {"state": []}, {"state": "bad"}):
             response = self.client.post("/api/seats/A1", json=body)
@@ -456,6 +471,26 @@ class ApiTests(unittest.TestCase):
         for bad in ({"interval": "9999"}, {"interval": "x"}, {}, {"interval": 10}):
             self.assertIn(self.client.post("/api/auto", json=bad).status_code, (400, 415))
         self.assertEqual(self.client.get("/api/state").json["auto_interval"], 0)
+
+    def test_remote_device_can_watch_but_not_control(self):
+        phone = {"REMOTE_ADDR": "192.168.1.50"}
+        # The passenger display and the data it needs are readable.
+        for route in ("/", "/api/state", "/assets/app.js", "/assets/style.css"):
+            self.assertEqual(self.client.get(route, environ_base=phone).status_code, 200)
+        # Anything that changes the demo, or lists this machine ports, is not.
+        self.assertEqual(self.client.get("/controls", environ_base=phone).status_code, 403)
+        self.assertEqual(self.client.get("/api/ports", environ_base=phone).status_code, 403)
+        for route, body in (("/api/next_stop", {}), ("/api/preset", {"name": "empty"}),
+                            ("/api/seats/A2", {"state": EMPTY}),
+                            ("/api/auto", {"interval": "10"}),
+                            ("/api/mode", {"mode": "hybrid", "port": "COM9"})):
+            response = self.client.post(route, json=body, environ_base=phone)
+            self.assertEqual(response.status_code, 403)
+            self.assertIn("only on the computer", response.json["error"])
+        # Nothing moved, and the controls still work on this machine.
+        self.assertEqual(self.client.get("/api/state").json["free"], EXAMPLE_FREE_TOTAL)
+        self.assertEqual(self.client.get("/controls").status_code, 200)
+        self.assertEqual(self.client.post("/api/next_stop", json={}).status_code, 200)
 
     def test_next_stop_rejected_cross_origin(self):
         response = self.client.post("/api/next_stop", json={},
