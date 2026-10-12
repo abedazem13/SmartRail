@@ -55,6 +55,7 @@ Current project members should give [DOCUMENTATION_AGENT_TASK.md](DOCUMENTATION_
 
 ## Documentation index
 * [01 Current status and handoff](Documentation/01_CURRENT_STATUS_AND_HANDOFF.md) — read first
+* [09 Setup, build and run](Documentation/09_SETUP_BUILD_AND_RUN.md) — how to start the dashboard, show it on a phone, connect the ESP32
 * [02 Requirements and scope](Documentation/02_REQUIREMENTS_AND_SCOPE.md)
 * [04 Hardware](Documentation/04_HARDWARE.md)
 * [05 Wiring and pinout](Documentation/05_WIRING_AND_PINOUT.md)
