@@ -4,13 +4,17 @@
 
 **Mentor:** Itai Dabran
 
-SmartRail detects in real time which train seats are free, sends that information to digital signage on the station platform, and guides waiting passengers to spread evenly along the platform (a uniform/linear distribution) instead of crowding around one point (a Gaussian distribution). A simulation quantifies how much this shortens the train's dwell time at the station.
+SmartRail aims to detect train-seat availability and show it to waiting passengers so they can choose suitable cars and platform zones. The current prototype combines two physical sensor inputs with a simulated train and a browser display. A quantitative comparison of passenger distributions and train dwell time is a separate planned evaluation, not a result established by the current seat-change animation.
 
-**Current maturity (2026-10-09):** the hardware presentation happened (reported by Abed; result not recorded). Firmware supports two IR seat sensors. A new laptop dashboard represents three cars × three seats: all simulated, or two real inputs plus seven simulated seats. Software tests pass; integration of this dashboard with the physical ESP32 is pending with teammates. Wireless car → platform communication and the dwell-time simulation are not started. See [Documentation/01_CURRENT_STATUS_AND_HANDOFF.md](Documentation/01_CURRENT_STATUS_AND_HANDOFF.md).
+**Current maturity (2026-10-13):** the earlier hardware presentation happened (reported by Abed; result not recorded). Firmware supports two IR seat sensors. The current laptop dashboard represents 12 logical cars × 108 seats: all 1,296 simulated, or two real inputs (A1/B1) plus 1,294 simulated seats. Simulated station stops and optional LAN passenger viewing are implemented. Current-version physical integration and final acceptance evidence still need recording; old software results do not certify the newer version. Wireless ESP32 → platform deployment and the quantitative dwell-time comparison are not implemented.
+
+## October 18 presentation package
+
+Start at [Presentation/README.md](Presentation/README.md) for the project overview, slide outline and speaker notes, live demo script, user manual, programmer manual, readiness checklist and test-results template. This package reflects the current 12-car source; parts of the older status/dashboard/handoff documentation still describe the previous nine-seat version. Confirm scope and submission formats with course staff, and add actual test evidence before submitting.
 
 ## Run the passenger display
 
-Start with the [hybrid dashboard guide](Documentation/17_HYBRID_DASHBOARD.md). It works without hardware and includes a separate control screen for changing simulated seats. Give teammates' AI agent [the hardware test handoff](Documentation/HARDWARE_DASHBOARD_AGENT_HANDOFF.md) before testing the two physical sensors.
+Start with the current [user manual](Presentation/USER_MANUAL.md). It works without hardware and includes a separate control screen for changing simulated seats. Teammates with the board should use the current [demo script](Presentation/DEMO_SCRIPT.md) and [test-results template](Presentation/TEST_RESULTS_TEMPLATE.md) for physical acceptance; the older hardware handoff contains obsolete nine-seat expectations.
 
 ## Documentation handoff
 
@@ -26,7 +30,7 @@ Current project members should give [DOCUMENTATION_AGENT_TASK.md](DOCUMENTATION_
 | PC software (interim) | Python 3.10+, Flask/Waitress + pyserial: local passenger dashboard, controls, USB seat states |
 | Communication | TODO: not selected yet (candidates: ESP-NOW, WiFi + Firebase) |
 | Platform signage | Laptop browser demo implemented; final deployment/hardware approval pending |
-| Simulation | TODO: not started |
+| Simulation | Random seat-change/station demo implemented; quantitative passenger-flow/dwell-time comparison not implemented |
 
 ## Folder description :
 * ESP32: source code for the esp side (firmware). Open `ESP32/ESP32.ino` in Arduino IDE.
@@ -54,6 +58,7 @@ Current project members should give [DOCUMENTATION_AGENT_TASK.md](DOCUMENTATION_
 | `DOCUMENTATION_AGENT_TASK.md` | Course instructions for the documentation handoff |
 
 ## Documentation index
+* [Presentation package](Presentation/README.md) — current overview, manuals, demo and preparation checklist
 * [01 Current status and handoff](Documentation/01_CURRENT_STATUS_AND_HANDOFF.md) — read first
 * [09 Setup, build and run](Documentation/09_SETUP_BUILD_AND_RUN.md) — how to start the dashboard, show it on a phone, connect the ESP32
 * [02 Requirements and scope](Documentation/02_REQUIREMENTS_AND_SCOPE.md)
