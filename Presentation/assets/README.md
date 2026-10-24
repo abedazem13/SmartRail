@@ -1,6 +1,28 @@
 # Presentation assets and evidence
 
-This directory is prepared for actual screenshots, photos, diagrams and logs. **Only this guide exists initially.** No hardware images, recordings, exported slides or measured results have been fabricated or copied from an older version.
+This directory holds presentation screenshots and guidance for the remaining photos, diagrams and logs. No hardware images, recordings or measured hardware results have been fabricated.
+
+## Available for upload to the slide-creation agent
+
+### Passenger dashboard — slide 6
+
+- **File:** [passenger-dashboard-simulation-2026-10-17.png](passenger-dashboard-simulation-2026-10-17.png)
+- **Captured:** 17 October 2026, from the actual browser application at source commit `5dcf10f`.
+- **Mode:** software simulation; no ESP32, serial worker or physical sensor connected.
+- **Scenario:** station 1, 12 cars × 108 seats; 311 free seats. Suggested cars: L (72), J (60), E (48).
+- **Image:** high-resolution full-page PNG, 2880 × 3172 pixels (1440 CSS-pixel-wide viewport, 2× pixel scale).
+- **Capture:** Microsoft Edge 155.0.4283.45 via Playwright, using an isolated local instance of the existing app. No application source, styles or displayed values were changed for the screenshot.
+- **Checks:** all 12 car cards rendered; total 311 and station 1 visible; control panel and error/offline warnings hidden; simulation label present; no uncaught browser exceptions during capture. This is not a full regression run or hardware validation.
+
+Suggested caption:
+
+> SmartRail passenger dashboard in simulation mode: per-car seat availability, occupancy indicators, suggested cars and platform zones.
+
+Upload the PNG itself to the slide-creation agent; a local file path alone does not attach it to another conversation. Keep its aspect ratio. If the full-page image is too tall for slide 6, use clearly labeled detail crops or callouts rather than stretching it or changing the counts. Preserve the fact that the shown values are simulated.
+
+### ESP32 and sensor photograph
+
+No physical prototype photo was found in the repository during this capture. Ask the teammates with the hardware for a clear, current photo of the actual ESP32, both sensors and their wiring. Until then, omit the optional photo or use an explicitly labeled architecture diagram—not a generated image presented as the real prototype.
 
 ## Capture list
 

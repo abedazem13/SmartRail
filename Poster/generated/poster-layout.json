@@ -1,0 +1,317 @@
+{
+  "template": "input\\course-poster-template.pptx",
+  "page_cm": [
+    67.00131944444445,
+    97.00066111111111
+  ],
+  "photos": {
+    "laptop_phone": "input\\WhatsApp Image 2026-10-q24 at 11.17.08.jpeg",
+    "seats": "input\\WhatsApp Image 2026-10qq-24 at 11.17.07.jpeg"
+  },
+  "screenshots": {
+    "passenger": "input\\WhatsApp Image 2026-10-24 at 13.38.25.jpeg",
+    "controls": "input\\WhatsApp Image 2026-10-24 at 13.38.32.jpeg"
+  },
+  "text_boxes": [
+    {
+      "name": "project logo initials",
+      "text": "SR",
+      "font_pt": 102,
+      "x_cm": 5.2,
+      "y_cm": 14.2,
+      "w_cm": 5.2,
+      "h_cm": 5.2
+    },
+    {
+      "name": "project title",
+      "text": "SmartRail",
+      "font_pt": 136,
+      "x_cm": 12.0,
+      "y_cm": 12.8,
+      "w_cm": 49.5,
+      "h_cm": 6.0
+    },
+    {
+      "name": "tagline",
+      "text": "Know where to board.",
+      "font_pt": 64,
+      "x_cm": 12.2,
+      "y_cm": 18.9,
+      "w_cm": 49.5,
+      "h_cm": 2.8
+    },
+    {
+      "name": "problem",
+      "text": "Problem: Passengers lack seat information before boarding.\nThey may crowd near one door or search inside the train.",
+      "font_pt": 54,
+      "x_cm": 5.4,
+      "y_cm": 22.0,
+      "w_cm": 56.2,
+      "h_cm": 4.8
+    },
+    {
+      "name": "project description",
+      "text": "SmartRail: Our IoT prototype monitors train-seat availability.\nIt guides passengers toward cars with more free seats.",
+      "font_pt": 54,
+      "x_cm": 5.4,
+      "y_cm": 26.88,
+      "w_cm": 56.2,
+      "h_cm": 4.8
+    },
+    {
+      "name": "feature 1",
+      "text": "Seat sensing: ESP32 and IR sensors detect occupied seats.",
+      "font_pt": 54,
+      "x_cm": 6.3,
+      "y_cm": 31.759999999999998,
+      "w_cm": 55.3,
+      "h_cm": 2.34
+    },
+    {
+      "name": "feature 2",
+      "text": "Hybrid train: 12 x 108 seats (1,296); two physical inputs.",
+      "font_pt": 54,
+      "x_cm": 6.3,
+      "y_cm": 34.18,
+      "w_cm": 55.3,
+      "h_cm": 2.34
+    },
+    {
+      "name": "feature 3",
+      "text": "Web guidance: Car counts, seat maps and zone suggestions.",
+      "font_pt": 54,
+      "x_cm": 6.3,
+      "y_cm": 36.6,
+      "w_cm": 55.3,
+      "h_cm": 2.34
+    },
+    {
+      "name": "advantages",
+      "text": "Advantage: Check before boarding, not after entering a car.",
+      "font_pt": 54,
+      "x_cm": 5.4,
+      "y_cm": 39.02,
+      "w_cm": 56.2,
+      "h_cm": 2.34
+    },
+    {
+      "name": "demonstration",
+      "text": "Demonstration: 2 physical seats + 1,294 simulated seats.",
+      "font_pt": 54,
+      "x_cm": 5.4,
+      "y_cm": 41.440000000000005,
+      "w_cm": 56.2,
+      "h_cm": 2.34
+    },
+    {
+      "name": "conclusion",
+      "text": "Conclusion: One display combines real and simulated seats.",
+      "font_pt": 54,
+      "x_cm": 5.4,
+      "y_cm": 43.86000000000001,
+      "w_cm": 56.2,
+      "h_cm": 2.34
+    },
+    {
+      "name": "method process caption",
+      "text": "METHOD / PROCESS — FROM SENSING TO GUIDANCE",
+      "font_pt": 40,
+      "x_cm": 5.4,
+      "y_cm": 46.4,
+      "w_cm": 56.2,
+      "h_cm": 1.9
+    },
+    {
+      "name": "process label 1",
+      "text": "1. Calibrate\nAt startup",
+      "font_pt": 36,
+      "x_cm": 5.6000000000000005,
+      "y_cm": 48.55,
+      "w_cm": 7.6,
+      "h_cm": 3.35
+    },
+    {
+      "name": "process label 2",
+      "text": "2. Detect\nFiltered IR",
+      "font_pt": 36,
+      "x_cm": 15.24,
+      "y_cm": 48.55,
+      "w_cm": 7.6,
+      "h_cm": 3.35
+    },
+    {
+      "name": "process label 3",
+      "text": "3. Send\nUSB state",
+      "font_pt": 36,
+      "x_cm": 24.88,
+      "y_cm": 48.55,
+      "w_cm": 7.6,
+      "h_cm": 3.35
+    },
+    {
+      "name": "process label 4",
+      "text": "4. Merge\nReal + sim.",
+      "font_pt": 36,
+      "x_cm": 34.52,
+      "y_cm": 48.55,
+      "w_cm": 7.6,
+      "h_cm": 3.35
+    },
+    {
+      "name": "process label 5",
+      "text": "5. Count\nFree / car",
+      "font_pt": 36,
+      "x_cm": 44.160000000000004,
+      "y_cm": 48.55,
+      "w_cm": 7.6,
+      "h_cm": 3.35
+    },
+    {
+      "name": "process label 6",
+      "text": "6. Guide\nShow zones",
+      "font_pt": 36,
+      "x_cm": 53.800000000000004,
+      "y_cm": 48.55,
+      "w_cm": 7.6,
+      "h_cm": 3.35
+    },
+    {
+      "name": "laptop_phone photo caption",
+      "text": "Laptop + mobile display",
+      "font_pt": 36,
+      "x_cm": 5.4,
+      "y_cm": 66.95,
+      "w_cm": 27.2,
+      "h_cm": 1.8
+    },
+    {
+      "name": "seats photo caption",
+      "text": "Two sensor seat models",
+      "font_pt": 36,
+      "x_cm": 34.4,
+      "y_cm": 66.95,
+      "w_cm": 27.2,
+      "h_cm": 1.8
+    },
+    {
+      "name": "controls screenshot caption",
+      "text": "Desktop controls (simulation)",
+      "font_pt": 36,
+      "x_cm": 5.4,
+      "y_cm": 83.55,
+      "w_cm": 27.2,
+      "h_cm": 1.8
+    },
+    {
+      "name": "passenger screenshot caption",
+      "text": "Passenger guidance (simulation detail)",
+      "font_pt": 36,
+      "x_cm": 34.4,
+      "y_cm": 83.55,
+      "w_cm": 27.2,
+      "h_cm": 1.8
+    },
+    {
+      "name": "team names",
+      "text": "Team: Yazan Rabea  •  Abed Azem  •  Samar Khatib",
+      "font_pt": 48,
+      "x_cm": 5.2,
+      "y_cm": 86.2,
+      "w_cm": 56.5,
+      "h_cm": 2.2
+    },
+    {
+      "name": "mentor name",
+      "text": "Mentors: Itai Dabran  •  Diana Cohen  •  Ido Ram",
+      "font_pt": 42,
+      "x_cm": 5.2,
+      "y_cm": 88.7,
+      "w_cm": 56.5,
+      "h_cm": 1.9
+    }
+  ],
+  "figure_count": 5,
+  "revision": "equal image panels, no repository line, three mentors",
+  "image_panel_size_cm": [
+    27.2,
+    14.3
+  ],
+  "image_panels": [
+    {
+      "name": "selected actual photo laptop_phone",
+      "source": "input\\WhatsApp Image 2026-10-q24 at 11.17.08.jpeg",
+      "x_cm": 5.4,
+      "y_cm": 52.5,
+      "width_cm": 27.2,
+      "height_cm": 14.3,
+      "detail_crop_px": null,
+      "background_padding": false
+    },
+    {
+      "name": "selected actual photo seats",
+      "source": "input\\WhatsApp Image 2026-10qq-24 at 11.17.07.jpeg",
+      "x_cm": 34.4,
+      "y_cm": 52.5,
+      "width_cm": 27.2,
+      "height_cm": 14.3,
+      "detail_crop_px": null,
+      "background_padding": false
+    },
+    {
+      "name": "selected desktop operator screenshot",
+      "source": "input\\WhatsApp Image 2026-10-24 at 13.38.32.jpeg",
+      "x_cm": 5.4,
+      "y_cm": 69.1,
+      "width_cm": 27.2,
+      "height_cm": 14.3,
+      "detail_crop_px": null,
+      "background_padding": false
+    },
+    {
+      "name": "selected mobile passenger screenshot",
+      "source": "input\\WhatsApp Image 2026-10-24 at 13.38.25.jpeg",
+      "x_cm": 34.4,
+      "y_cm": 69.1,
+      "width_cm": 27.2,
+      "height_cm": 14.3,
+      "detail_crop_px": [
+        0,
+        930,
+        1116,
+        1690
+      ],
+      "background_padding": true
+    }
+  ],
+  "dashboard_size_cm": {
+    "controls": [
+      27.2,
+      14.3
+    ],
+    "passenger": [
+      27.2,
+      14.3
+    ]
+  },
+  "process_bounds_cm": [
+    5.15,
+    46.3,
+    56.7,
+    5.95
+  ],
+  "process_steps": [
+    "1. Calibrate\nAt startup",
+    "2. Detect\nFiltered IR",
+    "3. Send\nUSB state",
+    "4. Merge\nReal + sim.",
+    "5. Count\nFree / car",
+    "6. Guide\nShow zones"
+  ],
+  "mentors": [
+    "Itai Dabran",
+    "Diana Cohen",
+    "Ido Ram"
+  ],
+  "repository_line_included": false,
+  "original_files_untouched": true
+}
