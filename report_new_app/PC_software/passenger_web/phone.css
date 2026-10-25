@@ -1,0 +1,264 @@
+/* The phone app.
+ *
+ * Deliberately the opposite shape to the platform screen. The screen is a map
+ * of twelve carriages that names none of them; this is one instruction for one
+ * person and shows nothing else. There is no list of carriages anywhere in
+ * this interface, and that is a design constraint rather than a simplification:
+ * the moment a passenger can see the whole train's availability and choose for
+ * themselves, everyone chooses the same carriage and the app has become a
+ * screen with extra steps.
+ *
+ * Held at arm's length, outdoors, in a hurry, probably one-handed: one column,
+ * a single large answer, and controls inside thumb reach at the bottom.
+ */
+
+:root {
+  color-scheme: dark;
+  --bg: #0c141d;
+  --panel: #15212e;
+  --line: #2a394a;
+  --ink: #f1f5fa;
+  --muted: #a5b5c6;
+  --mint: #76e1b5;
+  --yellow: #f4ca73;
+  --red: #ff919c;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: "Segoe UI", system-ui, sans-serif;
+  -webkit-text-size-adjust: 100%;
+}
+
+[hidden] { display: none !important; }
+
+button { font: inherit; cursor: pointer; }
+a { color: var(--mint); }
+:focus-visible { outline: 3px solid var(--mint); outline-offset: 3px; }
+
+.phone {
+  min-height: 100vh;
+  max-width: 560px;
+  margin: auto;
+  padding: 0 20px 28px;
+  display: grid;
+  grid-template-rows: auto 1fr auto auto;
+  gap: 22px;
+}
+
+/* ------------------------------------------------------------------- bar */
+
+.bar {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 16px 0 14px;
+  border-bottom: 1px solid var(--line);
+}
+
+.mark {
+  background: var(--mint);
+  color: #0f3025;
+  font-size: 13px;
+  font-weight: 850;
+  padding: 7px 6px;
+  border-radius: 9px;
+  transform: skew(-6deg);
+}
+
+.bar-title { font-size: 15px; font-weight: 600; }
+.bar-note { margin-left: auto; color: var(--muted); font-size: 11px; }
+
+/* ------------------------------------------------------------- step one */
+
+.step { align-self: start; }
+
+h1 {
+  margin: 4px 0 10px;
+  font-size: 30px;
+  font-weight: 600;
+  letter-spacing: -1.2px;
+  line-height: 1.15;
+}
+
+.lede {
+  margin: 0 0 22px;
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1.6;
+  max-width: 46ch;
+}
+
+/* The picker is laid out left to right in platform order, so the person's
+ * mental model of the platform is the same here as on the big screen. */
+.zone-picker {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(62px, 1fr));
+  gap: 9px;
+}
+
+.zone-button {
+  padding: 18px 6px 13px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: var(--panel);
+  color: var(--ink);
+  display: grid;
+  gap: 3px;
+  text-align: center;
+}
+
+.zone-button strong {
+  font-size: 23px;
+  font-weight: 650;
+  letter-spacing: -.5px;
+}
+
+.zone-button span { color: var(--muted); font-size: 9px; letter-spacing: 1.4px; }
+
+.zone-button:hover { border-color: #3d5366; }
+
+.zone-button[aria-pressed="true"] {
+  background: var(--mint);
+  border-color: transparent;
+  color: #0f3025;
+}
+
+.zone-button[aria-pressed="true"] span { color: #2b5c4a; }
+
+.zone-button:disabled { opacity: .5; cursor: default; }
+
+.hint { margin: 18px 0 0; color: var(--muted); font-size: 13px; }
+
+/* ------------------------------------------------------------ step two */
+
+/* The spacer row pushes the buttons to the bottom of a tall phone, inside
+ * thumb reach, without stretching the type above them. */
+.result {
+  align-self: stretch;
+  display: grid;
+  grid-template-rows: repeat(5, auto) 1fr auto;
+  gap: 0;
+}
+
+.result-kicker {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+/* The hero is the zone letter, because that is the thing painted on the
+ * platform that the person has to find. The carriage id is secondary: it is
+ * only legible once the train is already in front of them. */
+.result-hero {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  margin: 2px 0 4px;
+}
+
+.result-zone {
+  font-size: clamp(76px, 27vw, 128px);
+  font-weight: 650;
+  letter-spacing: -2px;
+  line-height: .95;
+  color: var(--mint);
+}
+
+.result-car {
+  font-size: 17px;
+  font-weight: 550;
+  color: var(--muted);
+  letter-spacing: -.2px;
+}
+
+.result-walk {
+  margin: 10px 0 0;
+  font-size: 22px;
+  font-weight: 550;
+  letter-spacing: -.6px;
+  line-height: 1.3;
+}
+
+.result-why {
+  margin: 12px 0 0;
+  padding-top: 15px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.result-why.is-spreading { color: var(--yellow); }
+
+.result-meta { margin-top: 20px; }
+
+.countdown {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.countdown.is-expired { color: var(--yellow); }
+
+.personal {
+  margin: 12px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.6;
+  max-width: 44ch;
+}
+
+/* --------------------------------------------------------------- actions */
+
+.actions {
+  display: grid;
+  gap: 10px;
+  margin-top: 26px;
+  align-self: end;
+}
+
+.primary, .secondary {
+  padding: 17px 18px;
+  border-radius: 13px;
+  border: 1px solid var(--line);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.primary { background: var(--mint); color: #0f3025; border-color: transparent; }
+.secondary { background: transparent; color: var(--ink); }
+.primary:hover, .secondary:hover { filter: brightness(1.12); }
+.primary:disabled, .secondary:disabled { opacity: .55; cursor: default; filter: none; }
+
+.alert {
+  margin: 0;
+  padding: 15px 17px;
+  border-radius: 12px;
+  border: 1px solid #5b3038;
+  background: #2a1a20;
+  color: var(--red);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.foot {
+  border-top: 1px solid var(--line);
+  padding-top: 16px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.foot p { margin: 0 0 7px; }
+.foot p:last-child { margin: 0; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .result-zone { transition: color .2s ease; }
+}

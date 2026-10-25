@@ -1,0 +1,401 @@
+/* Platform entrance screen.
+ *
+ * Drawn as a plan view of the train lying alongside the platform edge, the way
+ * carriage-position signs are drawn on a real platform. That is not decoration:
+ * because every carriage is pinned to the zone it stops at, the layout has no
+ * ordering of its own to give away. There is no ranked list to build here, and
+ * no slot a "best carriage" badge could occupy.
+ *
+ * Read from three metres and upwards while walking, so: few elements, large
+ * type, colour carrying the state, and nothing that needs a second look.
+ */
+
+:root {
+  color-scheme: dark;
+  --bg: #0c141d;
+  --panel: #15212e;
+  --line: #2a394a;
+  --ink: #f1f5fa;
+  --muted: #a5b5c6;
+  --mint: #76e1b5;
+  --yellow: #f4ca73;
+  --red: #ff919c;
+  --gray: #b1bdcd;
+  /* The painted line along a platform edge. */
+  --edge: #f4ca73;
+  --body: #1d2b3a;
+  /* The train's nose, and the gutter the zone band is labelled in. */
+  --nose-w: clamp(42px, 4vw, 86px);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: "Segoe UI", system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+
+[hidden] { display: none !important; }
+
+.visually-hidden {
+  position: absolute;
+  width: 1px; height: 1px;
+  margin: -1px; padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.screen {
+  min-height: 100vh;
+  display: grid;
+  grid-template-rows: auto auto 1fr auto;
+  gap: clamp(16px, 2.2vh, 34px);
+  padding: clamp(18px, 2.4vw, 44px);
+  max-width: 2200px;
+  margin: auto;
+}
+
+/* ------------------------------------------------------------- masthead */
+
+.masthead {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  column-gap: 18px;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: clamp(12px, 1.4vh, 22px);
+}
+
+.mark {
+  grid-row: 1 / 3;
+  background: var(--mint);
+  color: #0f3025;
+  font-size: clamp(16px, 1.5vw, 24px);
+  font-weight: 850;
+  padding: 10px 9px;
+  border-radius: 12px;
+  transform: skew(-6deg);
+}
+
+.masthead h1 {
+  margin: 0;
+  font-size: clamp(22px, 2.5vw, 44px);
+  font-weight: 600;
+  letter-spacing: -1.2px;
+}
+
+.installed {
+  grid-column: 2;
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: clamp(12px, 1.05vw, 17px);
+}
+
+.prototype {
+  grid-row: 1 / 3;
+  grid-column: 3;
+  margin: 0;
+  align-self: center;
+  color: var(--muted);
+  font-size: clamp(10px, .8vw, 13px);
+  text-align: right;
+  max-width: 11ch;
+  line-height: 1.5;
+}
+
+/* --------------------------------------------------------------- banner */
+
+/* The only sentence everybody reads at once, so it may only pose a local
+ * question: which zone near me has space. It never names a carriage. */
+.banner {
+  margin: 0;
+  padding: clamp(14px, 1.8vh, 26px) clamp(18px, 2vw, 34px);
+  border-radius: 14px;
+  background: var(--panel);
+  border-left: 7px solid var(--mint);
+  font-size: clamp(18px, 2vw, 36px);
+  font-weight: 550;
+  letter-spacing: -.6px;
+  line-height: 1.25;
+}
+
+.banner.is-spread {
+  border-left-color: var(--yellow);
+  background: linear-gradient(100deg, #30291a, var(--panel) 70%);
+}
+
+.banner.is-stale { border-left-color: var(--gray); color: var(--muted); }
+
+/* ------------------------------------------------------------- the map */
+
+.map {
+  align-self: center;
+  display: grid;
+  gap: 0;
+}
+
+.strip {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: stretch;
+  gap: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+}
+
+/* The train reads as one body with couplings, not a row of separate cards:
+ * it is a single vehicle drawn end to end. */
+.nose {
+  display: grid;
+  place-items: center;
+  width: var(--nose-w);
+  background: var(--body);
+  border: 2px solid var(--line);
+  border-right: none;
+  border-radius: 999px 0 0 999px;
+  color: var(--muted);
+  font-size: clamp(9px, .78vw, 13px);
+  font-weight: 700;
+  letter-spacing: 2px;
+}
+
+.nose span { transform: rotate(180deg); writing-mode: vertical-rl; }
+
+.train {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(clamp(86px, 7.4vw, 180px), 1fr);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  background: var(--body);
+  border: 2px solid var(--line);
+  border-radius: 0 16px 16px 0;
+  overflow: hidden;
+}
+
+.car {
+  --signal: var(--gray);
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: 6px;
+  min-height: clamp(190px, 31vh, 340px);
+  padding: clamp(12px, 1.6vh, 26px) clamp(8px, .8vw, 16px);
+  /* The coupling between carriages. */
+  border-left: 2px solid var(--line);
+  background: color-mix(in srgb, var(--signal) 11%, transparent);
+  min-width: 0;
+}
+
+.car:first-child { border-left: none; }
+
+.car-id {
+  color: var(--muted);
+  font-size: clamp(10px, .85vw, 14px);
+  font-weight: 650;
+  letter-spacing: 1.6px;
+}
+
+/* A count and a phrase are set differently on purpose. The count is the thing
+ * read at distance, so it gets the numerals; a phrase is read closer up, so it
+ * gets words at a size that fits the carriage's width without breaking. */
+.car-state {
+  align-self: center;
+  margin: 0;
+  color: var(--signal);
+  min-width: 0;
+}
+
+.car-figure {
+  display: block;
+  font-size: clamp(30px, 3.4vw, 72px);
+  font-weight: 600;
+  letter-spacing: -2.5px;
+  line-height: .96;
+}
+
+.car-unit {
+  display: block;
+  margin-top: 4px;
+  font-size: clamp(11px, .95vw, 17px);
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+.car-phrase {
+  display: block;
+  font-size: clamp(15px, 1.35vw, 27px);
+  font-weight: 600;
+  letter-spacing: -.5px;
+  line-height: 1.15;
+  text-wrap: balance;
+}
+
+.car-detail {
+  color: var(--muted);
+  font-size: clamp(10px, .82vw, 15px);
+  line-height: 1.4;
+}
+
+.car.space   { --signal: var(--mint); }
+.car.filling { --signal: var(--yellow); }
+.car.full    { --signal: var(--red); }
+.car.unknown { --signal: var(--gray); }
+
+/* The doors, drawn along the bottom edge of each carriage, which is the edge
+ * facing the platform. Purely positional: it marks where this carriage can be
+ * boarded, never how good a place it is to board. */
+.car::after {
+  content: "";
+  height: 6px;
+  margin: 12px clamp(10px, 1.4vw, 30px) 0;
+  border-radius: 3px;
+  background: var(--signal);
+  opacity: .55;
+}
+
+/* Spread mode: every carriage with room is painted the same, so the diagram
+ * carries no comparison a passenger could act on. */
+.train.is-spread .car.space { background: color-mix(in srgb, var(--mint) 13%, transparent); }
+
+/* -------------------------------------------------- platform edge & zones */
+
+.edge {
+  height: clamp(10px, 1.1vh, 18px);
+  margin-top: clamp(10px, 1.2vh, 20px);
+  border-radius: 3px;
+  background: repeating-linear-gradient(115deg,
+    var(--edge) 0 14px, #3b3117 14px 28px);
+}
+
+/* The band is labelled once at its left end, the way a platform sign labels a
+ * run of markers, rather than repeating the word under all twelve letters. */
+.zones {
+  position: relative;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  margin: 0;
+  padding: 0 0 0 var(--nose-w);
+  list-style: none;
+}
+
+.zones::before {
+  content: "PLATFORM ZONE";
+  position: absolute;
+  left: 0;
+  top: clamp(14px, 1.6vh, 24px);
+  width: var(--nose-w);
+  padding-right: 10px;
+  color: var(--muted);
+  font-size: clamp(7px, .62vw, 10px);
+  font-weight: 700;
+  letter-spacing: 1.4px;
+  line-height: 1.5;
+}
+
+.zone {
+  position: relative;
+  text-align: center;
+  padding-top: clamp(8px, 1vh, 16px);
+  color: var(--ink);
+  font-size: clamp(16px, 1.7vw, 32px);
+  font-weight: 700;
+}
+
+/* Where this particular screen stands, marked under its own zone letter. Two
+ * screens at opposite ends of one platform show the same seat counts but mark
+ * different zones, which is how a shared screen still splits a crowd by
+ * position rather than sending everyone the same way. */
+.zone.is-here strong { color: var(--mint); }
+
+.here {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: clamp(4px, .6vh, 10px);
+  white-space: nowrap;
+  color: var(--mint);
+  font-size: clamp(11px, .95vw, 16px);
+  font-weight: 600;
+}
+
+.here-arrow {
+  width: 0; height: 0;
+  border: 7px solid transparent;
+  border-bottom-color: var(--mint);
+  margin-bottom: 3px;
+}
+
+/* --------------------------------------------------------------- footer */
+
+.tally {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px 30px;
+  border-top: 1px solid var(--line);
+  padding-top: clamp(12px, 1.4vh, 22px);
+}
+
+.counts {
+  margin: 0;
+  color: var(--muted);
+  font-size: clamp(12px, 1.05vw, 19px);
+}
+
+.counts strong {
+  color: var(--ink);
+  font-size: clamp(20px, 1.8vw, 34px);
+  font-weight: 600;
+  letter-spacing: -1px;
+}
+
+.key {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 22px;
+  margin: 0;
+  color: var(--muted);
+  font-size: clamp(10px, .85vw, 14px);
+}
+
+.key > div { display: flex; align-items: center; gap: 8px; }
+.key dd { margin: 0; }
+
+.swatch {
+  width: 11px; height: 11px;
+  border-radius: 3px;
+  background: var(--swatch, var(--gray));
+}
+
+.swatch.space   { --swatch: var(--mint); }
+.swatch.filling { --swatch: var(--yellow); }
+.swatch.full    { --swatch: var(--red); }
+.swatch.unknown { --swatch: var(--gray); }
+
+.offline {
+  flex-basis: 100%;
+  margin: 0;
+  color: var(--red);
+  font-size: clamp(12px, 1vw, 17px);
+}
+
+/* A narrow window must not stack the carriages into a column: a column is a
+ * list, and a list invites reading the top one as the answer. The diagram
+ * scrolls sideways instead and stays a map. */
+@media (max-width: 760px) {
+  .masthead { grid-template-columns: auto 1fr; }
+  .prototype { grid-row: 3; grid-column: 1 / -1; text-align: left; max-width: none; }
+}
