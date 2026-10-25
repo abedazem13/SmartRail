@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0c141d">
+  <title>SmartRail · Where to board</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="/passenger/phone.css">
+  <script src="/passenger/phone.js" defer></script>
+</head>
+<body>
+  <div class="phone">
+
+    <header class="bar">
+      <span class="mark" aria-hidden="true">SR</span>
+      <span class="bar-title">Where to board</span>
+      <span class="bar-note">Prototype</span>
+    </header>
+
+    <!-- Step 1. The only thing the app asks for is where the person is
+         standing. Everything else follows from it, and it is the reason two
+         people can be given different answers. -->
+    <section class="step" id="ask" aria-labelledby="ask-title">
+      <h1 id="ask-title">Where are you standing?</h1>
+      <p class="lede">Tap the platform zone you are waiting at. The zones run
+        front of the train to back, the same order as the platform screen.</p>
+      <div class="zone-picker" id="zone-picker" role="group"
+           aria-labelledby="ask-title"></div>
+      <p class="hint" id="ask-hint">Choose a zone to get your carriage.</p>
+    </section>
+
+    <!-- Step 2. One instruction, filling the screen. No list of carriages to
+         compare, because a list is what sends everyone to the same doors. -->
+    <section class="step result" id="result" aria-live="polite" hidden>
+      <p class="result-kicker">Wait at platform zone</p>
+      <div class="result-hero">
+        <span class="result-zone" id="result-zone">—</span>
+        <span class="result-car" id="result-car">—</span>
+      </div>
+      <p class="result-walk" id="result-walk">—</p>
+      <p class="result-why" id="result-why">—</p>
+
+      <div class="result-meta">
+        <p class="countdown" id="countdown">—</p>
+        <p class="personal">This carriage was picked for you alone. The next
+          person to ask from this zone is being sent to a different one, so the
+          queue at your door stays short.</p>
+      </div>
+
+      <div class="actions">
+        <button type="button" class="primary" id="boarded">I have boarded</button>
+        <button type="button" class="secondary" id="again">Change my zone</button>
+      </div>
+    </section>
+
+    <p class="alert" id="error" role="alert" hidden></p>
+
+    <footer class="foot">
+      <p>Seat counts come from the seat sensors on the train. Seats are not
+        reserved: this is guidance about space, not a booking.</p>
+      <p><a href="/platform">Open the platform map</a></p>
+    </footer>
+
+  </div>
+</body>
+</html>

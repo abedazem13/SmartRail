@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0c141d">
+  <title>SmartRail · Platform map</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="/passenger/platform.css">
+  <script src="/passenger/platform.js" defer></script>
+</head>
+<body>
+  <div class="screen">
+
+    <header class="masthead">
+      <span class="mark" aria-hidden="true">SR</span>
+      <h1>Seats on the arriving train</h1>
+      <p class="installed" id="installed">Screen position not set</p>
+      <p class="prototype">Prototype. Not a live train service.</p>
+    </header>
+
+    <p class="banner" id="banner" aria-live="polite">Connecting to the train…</p>
+
+    <main class="map" aria-labelledby="map-heading">
+      <h2 class="visually-hidden" id="map-heading">
+        Free seats by carriage, in platform order
+      </h2>
+
+      <div class="strip">
+        <div class="nose" aria-hidden="true">
+          <span>FRONT</span>
+        </div>
+        <!-- Carriages in physical order, front to back. This order never
+             changes: the diagram is a map of the platform, so a carriage
+             cannot move because it happens to have more seats. -->
+        <ol class="train" id="train"></ol>
+      </div>
+
+      <div class="edge" aria-hidden="true"></div>
+
+      <ol class="zones" id="zones" aria-label="Platform zones"></ol>
+      <div class="here" id="here" hidden>
+        <span class="here-arrow" aria-hidden="true"></span>
+        <span id="here-text"></span>
+      </div>
+    </main>
+
+    <footer class="tally">
+      <p class="counts">
+        <strong id="free-total">—</strong> seats confirmed free<span
+          id="unknown-note" hidden>, <strong id="unknown-total">—</strong> not reported</span>
+      </p>
+      <dl class="key" id="key">
+        <div><dt class="swatch space"></dt><dd>Seats free</dd></div>
+        <div><dt class="swatch filling"></dt><dd>Nearly full</dd></div>
+        <div><dt class="swatch full"></dt><dd>No seats free</dd></div>
+        <div><dt class="swatch unknown"></dt><dd>Not reported</dd></div>
+      </dl>
+      <p class="offline" id="offline" role="alert" hidden>
+        Lost contact with the train. Seat counts are out of date.
+      </p>
+    </footer>
+
+  </div>
+</body>
+</html>

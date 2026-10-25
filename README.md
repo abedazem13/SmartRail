@@ -1,92 +1,73 @@
-## SmartRail — Seat Occupancy Sensing and Platform Guidance
+# report_new_app
 
-**Project by:** Yazan Rabea, Abed Azem, Samar Khatib
+Stage 3 work, kept in one folder so that nothing in the rest of the repository
+is overwritten. Everything here is new; no existing SmartRail file is replaced.
 
-**Mentor:** Itai Dabran
+    PC_software/dispatcher.py            the routing rule the phone app serves
+    PC_software/platform_view.py         what a platform entrance screen may show
+    PC_software/passenger_routes.py      Flask routes for both interfaces
+    PC_software/passenger_web/           the two UIs (platform map, phone app)
+    PC_software/guidance.py              a rewritten guidance.py (see below)
+    PC_software/tests/                   76 tests pinning the design constraints
+    PC_software/PASSENGER_INTERFACES.md  how both components work and why
+    Documentation/SmartRail_Report_2.docx  the current stage 3 report
+    Documentation/SmartRail_Report_1.docx  an earlier, superseded draft
+    Documentation/build_report.js          regenerates the report from source
+    Documentation/report_assets/           figures and the stage 2 guides it embeds
+    simulation/                          the boarding model and its figures
 
-SmartRail aims to detect train-seat availability and show it to waiting passengers so they can choose suitable cars and platform zones. The current prototype combines two physical sensor inputs with a simulated train and a browser display. A quantitative comparison of passenger distributions and train dwell time is a separate planned evaluation, not a result established by the current seat-change animation.
+## Running it
 
-**Current maturity (2026-10-13):** the earlier hardware presentation happened (reported by Abed; result not recorded). Firmware supports two IR seat sensors. The current laptop dashboard represents 12 logical cars × 108 seats: all 1,296 simulated, or two real inputs (A1/B1) plus 1,294 simulated seats. Simulated station stops and optional LAN passenger viewing are implemented. Current-version physical integration and final acceptance evidence still need recording; old software results do not certify the newer version. Wireless ESP32 → platform deployment and the quantitative dwell-time comparison are not implemented.
+The two interfaces run on their own, without touching the existing dashboard:
 
-## October 18 presentation package
+    cd report_new_app/PC_software
+    python passenger_routes.py
 
-Start at [Presentation/README.md](Presentation/README.md) for the project overview, slide outline and speaker notes, live demo script, user manual, programmer manual, readiness checklist and test-results template. This package reflects the current 12-car source; parts of the older status/dashboard/handoff documentation still describe the previous nine-seat version. Confirm scope and submission formats with course staff, and add actual test evidence before submitting.
+    Platform screen: http://127.0.0.1:8766/platform
+    Phone app:       http://127.0.0.1:8766/app
 
-## Run the passenger display
+## Running the tests
 
-Start with the current [user manual](Presentation/USER_MANUAL.md). It works without hardware and includes a separate control screen for changing simulated seats. Teammates with the board should use the current [demo script](Presentation/DEMO_SCRIPT.md) and [test-results template](Presentation/TEST_RESULTS_TEMPLATE.md) for physical acceptance; the older hardware handoff contains obsolete nine-seat expectations.
+    cd report_new_app/PC_software
+    python -m unittest discover -s tests -p "test_*.py"
 
-## Documentation handoff
+76 tests should pass. The suite reaches sideways into `../../PC_software` for
+the team's `dashboard_model.py` and `dashboard.py`, so it must stay two levels
+below the repository root to find them. If those files move, the tests that
+need them skip with a message rather than failing.
 
-Current project members should give [DOCUMENTATION_AGENT_TASK.md](DOCUMENTATION_AGENT_TASK.md) to their AI agent and complete the documentation handoff described there.
+## About PC_software/guidance.py
 
-## Details about the project
+This is a rewritten version of the file of the same name in the repository's
+own `PC_software/`. It keeps the public names and return shapes, so
+`seat_live.py` and `seat_sim.py` would keep working, but the rule underneath
+routes each passenger to the least-loaded carriage within walking range instead
+of the nearest one with a free seat.
 
-| Area | Technology |
-|---|---|
-| Sensing | Sharp GP2Y0A21YK0F IR distance sensor (analog, 10–80 cm), one per seat |
-| Controller | ESP32 DevKit V1 (30-pin, CP2102 USB-UART) |
-| Firmware | Arduino framework, Arduino IDE 2.x |
-| PC software (interim) | Python 3.10+, Flask/Waitress + pyserial: local passenger dashboard, controls, USB seat states |
-| Communication | TODO: not selected yet (candidates: ESP-NOW, WiFi + Firebase) |
-| Platform signage | Laptop browser demo implemented; final deployment/hardware approval pending |
-| Simulation | Random seat-change/station demo implemented; quantitative passenger-flow/dwell-time comparison not implemented |
+**It is not active.** The repository's `PC_software/guidance.py` is untouched
+and is still what the console tools import. The copy here is the proposed
+replacement, kept separate so this folder changes nothing. To adopt it, copy it
+over the original and run the full suite from `PC_software`, where 126 tests
+should pass: the existing ones plus these.
 
-## Folder description :
-* ESP32: source code for the esp side (firmware). Open `ESP32/ESP32.ino` in Arduino IDE.
-* PC_software: Python programs that read the ESP32 over USB, count free seats per carriage and show passenger guidance. See [PC_software/README.md](PC_software/README.md).
-* Documentation: wiring diagram + basic operating instructions
-* Unit Tests: tests for individual hardware components (input / output devices)
-* flutter_app : dart code for our Flutter app. TODO: confirm whether an app is in scope
-* Parameters: `ESP32/parameters.h` holds every tunable setting (pins, thresholds, timings)
-* Assets: link to 3D printed parts, Fritzing file for connection diagram (FZZ format) etc
+## Regenerating the report
 
-## Files
+    cd report_new_app/Documentation
+    npm install docx
+    node build_report.js
 
-| File | What it does |
-|---|---|
-| [PC_software/dashboard.py](PC_software/dashboard.py) | New local passenger screen and controls: simulation or two-sensor hybrid mode |
-| `ESP32/ESP32.ino` | Firmware: reads both seat sensors, calibrates the empty-seat distance at boot, decides EMPTY/OCCUPIED per seat, lights a status LED, prints status and events over USB |
-| `ESP32/parameters.h` | Every tunable setting: number of seats, pins, sampling, thresholds |
-| `ESP32/SECRETS.example.h` | Template for WiFi credentials (not used yet). Real values go in `ESP32/SECRETS.h`, which Git ignores |
-| `ESP32/compiled_program.bin` | Compiled firmware, flashable without Arduino IDE. See [06_ESP32_FIRMWARE.md](Documentation/06_ESP32_FIRMWARE.md#compiled-binary) |
-| `PC_software/seat_live.py` | Reads the board over USB: seat changes, free seats per carriage, platform display line. Records sessions for replay |
-| `PC_software/seat_status.py` | Short version: prints only when a seat becomes occupied or empty |
-| `PC_software/guidance.py` | Decides which carriage each waiting passenger should board |
-| `PC_software/seat_sim.py` | Runs the PC software on a simulated board, no hardware needed |
-| `Unit Tests/ir_sensor_check/ir_sensor_check.ino` | Hardware test: voltage, distance and noise of both sensors, no decisions |
-| `DOCUMENTATION_AGENT_TASK.md` | Course instructions for the documentation handoff |
+It reads figures from `report_assets/img` and embeds the stage 2 guides from
+`report_assets/stage2` verbatim, so Appendices D and E cannot drift from what
+is in `Presentation/`. The output is written next to the script as
+`SmartRail_Report.docx`.
 
-## Documentation index
-* [Presentation package](Presentation/README.md) — current overview, manuals, demo and preparation checklist
-* [01 Current status and handoff](Documentation/01_CURRENT_STATUS_AND_HANDOFF.md) — read first
-* [09 Setup, build and run](Documentation/09_SETUP_BUILD_AND_RUN.md) — how to start the dashboard, show it on a phone, connect the ESP32
-* [02 Requirements and scope](Documentation/02_REQUIREMENTS_AND_SCOPE.md)
-* [04 Hardware](Documentation/04_HARDWARE.md)
-* [05 Wiring and pinout](Documentation/05_WIRING_AND_PINOUT.md)
-* [06 ESP32 firmware](Documentation/06_ESP32_FIRMWARE.md)
-* [08 Communication and data](Documentation/08_COMMUNICATION_AND_DATA.md) — serial line format
-* [11 Troubleshooting](Documentation/11_TROUBLESHOOTING.md)
-* [12 Design decisions](Documentation/12_DESIGN_DECISIONS.md)
-* [Open questions](Documentation/OPEN_QUESTIONS.md)
-* [Changelog](Documentation/CHANGELOG.md)
-* [PC software](PC_software/README.md)
-* [17 Hybrid dashboard](Documentation/17_HYBRID_DASHBOARD.md)
-* [Hardware dashboard agent handoff](Documentation/HARDWARE_DASHBOARD_AGENT_HANDOFF.md)
+Note that `report_assets/stage2/USER_MANUAL.md` is a copy taken from
+`Presentation/USER_MANUAL.md` at the time of writing. If that file changes,
+copy it across and rebuild so Appendix E stays in step.
 
-## ESP32 SDK version used in this project:
-TODO: fill from Arduino IDE → Boards Manager → "esp32 by Espressif Systems" installed version
+## About the simulation folder
 
-## Arduino/ESP32 libraries used in this project:
-* None beyond the ESP32 Arduino core (hardware-feasibility stage)
-
-PC side: Python 3 (TODO: version) and pyserial (TODO: version, `python -m pip show pyserial`).
-
-## Connection diagram:
-See [Documentation/05_WIRING_AND_PINOUT.md](Documentation/05_WIRING_AND_PINOUT.md). TODO: add Fritzing diagram.
-
-## Project Poster:
-TODO
-
-This project is part of ICST - The Interdisciplinary Center for Smart Technologies, Taub Faculty of Computer Science, Technion
-https://icst.cs.technion.ac.il/
+`simulation/israel_journey.py` and the GTFS scripts are kept because they are
+real work, but the current report no longer covers them: the Israel Railways
+calibration was cut, and the crush-load result that justifies the screen's
+20 percent fallback is now measured in the generic model instead.

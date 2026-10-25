@@ -1,21 +1,62 @@
 """
 guidance.py - decides which carriage each waiting passenger should go to.
 
+This module used to carry its own routing rule. It now delegates to
+`dispatcher.py`, which is the same rule the phone app serves to passengers, so
+the console tool, the simulator and the app cannot drift apart and give three
+different answers to the same question.
+
 Input : the carriage messages produced by CarriageController
         (free_min = seats known free, free_max = free_min + seats we can't see)
 Output: a status per carriage for the platform display, and a carriage
         for each passenger.
 
-Rules, in order of preference for each passenger:
-  1. a carriage with a CONFIRMED free seat (nearest one first)
-  2. a carriage with a POSSIBLY free seat (no sensor / sensor fault)
-  3. no seats anywhere -> the carriage with the fewest people assigned so far,
-     so boarding is spread evenly across doors (this is what cuts dwell time)
-Each assignment "uses up" a seat, so two passengers are never sent to the
-same single free seat.
+The rule, for each passenger, in order:
+  1. keep only carriages within walking range of where they are standing;
+  2. of those, prefer ones with a CONFIRMED free seat;
+  3. among the candidates, take the one FEWEST passengers have been sent to;
+  4. break ties on free seats, then walking distance, then carriage number.
+
+Step 3 is the primary key and step 4 only breaks ties. That is what divides a
+waiting crowd: the emptiest carriage wins the first passenger and loses the
+second, so six people standing together are sent six different ways. Against
+the measured boarding model this is worth about 43% of the dwell-time saving,
+where the previous nearest-carriage-with-a-seat rule was worth about 13%.
+
+Two deliberate differences from the previous rule:
+
+  * An unsensed seat is no longer a reason to send someone anywhere. The old
+    rule preferred a carriage whose sensors had failed over spreading the load,
+    which meant guessing. A seat is free only when a sensor says so.
+  * Walking range is enforced. The old rule could send a passenger the whole
+    length of the train for one confirmed seat, which costs more walking time
+    than the seat is worth.
+
+The public names and return shapes are unchanged, so `seat_live.py` and
+`seat_sim.py` keep working as they did.
 
 Run on its own for a demo:  python guidance.py
 """
+
+from dispatcher import DEFAULT_WALK_LIMIT, Dispatcher
+from platform_view import build_view
+
+# Both of these read as "there is a seat here" on the console's three-state
+# display. The platform screen draws the finer distinction; see platform_view.
+_FREE_STATES = ("space", "filling")
+
+
+def _snapshot(messages, seats_per_car=None):
+    """Carriage messages in the shape the dispatcher and the screen read.
+
+    `free_max - free_min` is the number of seats no sensor can account for.
+    They are carried as `unknown`, never folded into `free`.
+    """
+    return [{"id": m["car"], "zone": f"C{m['car']}",
+             "free": max(0, m["free_min"]),
+             "unknown": max(0, m["free_max"] - m["free_min"]),
+             "total": seats_per_car or 0}
+            for m in messages]
 
 
 def carriage_status(msg):
@@ -26,45 +67,52 @@ def carriage_status(msg):
     return "FULL"
 
 
-def display_line(messages):
-    """What the platform screen would show."""
-    return " | ".join(f"C{m['car']} {carriage_status(m)}" for m in messages)
+def display_line(messages, seats_per_car=None):
+    """What the platform screen would show, in one console line.
+
+    Carriages appear in their physical order along the platform and are never
+    sorted by how many seats they have. Pass `seats_per_car` to enable the
+    screen's crush-load behaviour: below 20% of the train's seats free, the
+    counts stop being graded and the line becomes one instruction to spread
+    out. Without it the train's size is unknown and no such claim is made.
+    """
+    view = build_view({"cars": _snapshot(messages, seats_per_car)})
+    if view["mode"] == "spread":
+        return "TRAIN BUSY - spread along the platform, use all the doors"
+    states = {"space": "FREE", "filling": "FREE",
+              "full": "FULL", "unknown": "UNKNOWN"}
+    return " | ".join(f"C{car['id']} {states[car['state']]}"
+                      for car in view["cars"])
 
 
-def assign_passengers(messages, passenger_positions):
+def assign_passengers(messages, passenger_positions,
+                      walk_limit=DEFAULT_WALK_LIMIT, dispatcher=None):
     """
     passenger_positions: for each waiting passenger, the carriage number they
     are standing in front of (1, 2, 3...). Returns a list of
     (position, assigned_carriage, reason).
+
+    The passengers in one call are divided between carriages: each assignment
+    is remembered while the call runs, so the second passenger standing at a
+    given door is not sent where the first one was.
+
+    Pass `dispatcher` to share one running Dispatcher across several calls -
+    that is how the phone app keeps dividing a crowd that arrives over several
+    minutes. Without it each call starts fresh, which is what the console tool
+    and the simulator want.
     """
-    sure = {m["car"]: m["free_min"] for m in messages}
-    maybe = {m["car"]: m["free_max"] - m["free_min"] for m in messages}
-    boarding = {m["car"]: 0 for m in messages}
+    cars = tuple(m["car"] for m in messages)
+    router = dispatcher or Dispatcher(
+        cars, zones={m["car"]: f"C{m['car']}" for m in messages},
+        walk_limit=walk_limit)
+    state = _snapshot(messages)
+
     result = []
-
-    for pos in passenger_positions:
-        def score(car):
-            if sure[car] > 0:
-                tier = 0
-            elif maybe[car] > 0:
-                tier = 1
-            else:
-                tier = 2
-            crowd = boarding[car] if tier == 2 else 0
-            return (tier, crowd, abs(car - pos))
-
-        car = min(sure, key=score)
-        tier = score(car)[0]
-        if tier == 0:
-            sure[car] -= 1
-            reason = "free seat"
-        elif tier == 1:
-            maybe[car] -= 1
-            reason = "seat possibly free (not sensed)"
-        else:
-            reason = "no seats - least crowded door"
-        boarding[car] += 1
-        result.append((pos, car, reason))
+    for position in passenger_positions:
+        assignment = router.assign(position, state)
+        reason = ("free seat" if assignment.reason == "confirmed free seat"
+                  else "no confirmed seat nearby - least crowded door")
+        result.append((position, assignment.car, reason))
     return result
 
 
