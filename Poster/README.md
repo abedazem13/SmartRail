@@ -1,12 +1,27 @@
 # SmartRail poster — PDF and editable source
 
-Prepared **24 October 2026**, after the team reported completing the final presentation. Latest revision uses four equal-sized image panels, removes the repository line, and credits all three user-specified mentors. The two-sentence Problem/SmartRail explanations and six-step process diagram remain. The course template remains the controlling reference.
+## Current version: stage 3 (25 October 2026)
 
-## Files to use
+The poster now follows the stage 3 work: the boarding simulation (FR-007) and the two passenger interfaces that replaced the ranked "top 3 cars" display.
 
 - **Submit/print:** [SmartRail_Poster.pdf](SmartRail_Poster.pdf)
 - **Edit in PowerPoint:** [SmartRail_Poster.pptx](SmartRail_Poster.pptx)
 - **Quick preview:** [SmartRail_Poster_preview.png](SmartRail_Poster_preview.png)
+- **Rebuild:** `python Poster/build_poster_stage3.py`, then export the PDF from PowerPoint at actual size.
+
+What is on it:
+
+- Tagline "Spread out. Board faster." The description (54 pt) covers the problem, what SmartRail is, three features (seat sensing, platform map, phone app) and the simulated result: stops 22% shorter.
+- An editable system diagram with steps 1–6, from seat sensor to platform map and phone app.
+- Two native PowerPoint charts with values from `simulation/boarding_sim.py` at its default parameters: boarders per carriage with and without the platform map, and mean dwell against compliance for the stage 3 display and the stage 2 "three best cars" display.
+- The platform screen and phone app figures from [simulation/figures](../simulation/figures), and the seat-sensor prototype photo in [input/stage3](input/stage3).
+
+The 22% is a simulation result, not a station measurement, and the poster says so. The previous (stage 2) poster is kept in [generated/before-stage3](generated/before-stage3/). Everything below this section describes that stage 2 version.
+
+## Stage 2 version (24 October 2026)
+
+Prepared **24 October 2026**, after the team reported completing the final presentation. That revision used four equal-sized image panels, removed the repository line, and credited all three user-specified mentors. The two-sentence Problem/SmartRail explanations and six-step process diagram remain in it. The course template remains the controlling reference. Its files are now in [generated/before-stage3](generated/before-stage3/); `build_poster.py` still builds that version.
+
 - **Process diagram separately:** [SmartRail_Process_Diagram.png](SmartRail_Process_Diagram.png) — also editable inside the PowerPoint
 
 The poster is **one page, 67 cm wide × 97 cm high (portrait)**, matching the actual course template. Print at **actual size / 100%**, not scaled to A4. Use the PDF rather than the preview image for submission or printing. This is a standard PowerPoint PDF, not a separately certified PDF/X or CMYK file; follow any additional print-shop requirements.
