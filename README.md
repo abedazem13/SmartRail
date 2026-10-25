@@ -10,8 +10,7 @@ is overwritten. Everything here is new; no existing SmartRail file is replaced.
     PC_software/guidance.py              a rewritten guidance.py (see below)
     PC_software/tests/                   76 tests pinning the design constraints
     PC_software/PASSENGER_INTERFACES.md  how both components work and why
-    Documentation/SmartRail_Report_2.docx  the current stage 3 report
-    Documentation/SmartRail_Report_1.docx  an earlier, superseded draft
+    Documentation/SmartRail_Report.docx    the current stage 3 report
     Documentation/build_report.js          regenerates the report from source
     Documentation/report_assets/           figures and the stage 2 guides it embeds
     simulation/                          the boarding model and its figures
